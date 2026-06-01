@@ -39,7 +39,8 @@ scripts/             # Pure-stdlib Node helpers + the precommit installer
 docs/AUDIT.md        # Single living audit log — append Pass N section per audit
 ```
 
-Full architecture diagram and design rationale: [docs/AUDIT.md](docs/AUDIT.md).
+Full architecture diagram and design rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The single living audit log lives at [docs/AUDIT.md](docs/AUDIT.md).
 
 ## Workflow
 
@@ -86,9 +87,12 @@ Full architecture diagram and design rationale: [docs/AUDIT.md](docs/AUDIT.md).
 
 ## Releasing
 
-1. Bump `version` in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json),
-   [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json), and the
-   marketplace `plugins[0].version` field. Keep the three in sync.
+1. Bump `version` in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json)
+   and the top-level `version` in
+   [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json). Keep the
+   two in sync. The marketplace `plugins[0]` entry has **no** `version` field by
+   design — the plugin version resolves solely from `plugin.json`, avoiding the
+   dual-source pitfall where `plugin.json` silently wins.
 2. Move `[Unreleased]` entries into a new `[X.Y.Z] — YYYY-MM-DD` section in
    [CHANGELOG.md](CHANGELOG.md).
 3. Tag: `git tag vX.Y.Z && git push --tags`.
@@ -107,7 +111,8 @@ index at the top. Finding ids (`F-NNN`) are **stable forever** — never
 renumbered or reused. Fix status updates land in the master index; the
 historical body stays as written.
 
-## Code of conduct
+## Conduct
 
-By contributing you agree to abide by the [Contributor Covenant
-v2.1](CODE_OF_CONDUCT.md).
+Be respectful and professional in issues, PRs, and reviews. Harassment or
+abusive behaviour is not tolerated; maintainers may remove contributions or
+block contributors who violate this expectation.

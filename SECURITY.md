@@ -4,11 +4,11 @@
 
 | Version | Supported |
 |---|---|
-| 0.2.x   | ✅ |
-| < 0.2   | ❌ |
+| 0.1.x   | ✅ |
+| < 0.1   | ❌ |
 
 This plugin uses semantic versioning. Security fixes ship in patch releases off
-the latest minor (e.g. `0.2.1`). Older minors receive **no** backports.
+the latest minor (e.g. `0.1.1`). Older minors receive **no** backports.
 
 ## Reporting a vulnerability
 
@@ -46,7 +46,7 @@ local filesystem and shell access. The plugin itself adds:
 | `scripts/install-precommit.sh` | Writes a git `pre-commit` hook into the **target** project. Runs only when the user explicitly invokes the install script — never automatically. |
 | Bundled Playwright MCP | Drives a real browser against the URL given in `userConfig.dev_url` (or auto-detected from the project's framework manifest). Uses the user's local Playwright cache. The MCP server is hosted by the user's machine — no external services. |
 | `userConfig.auth_password` | Marked `sensitive: true`. Stored in the OS keychain via Claude Code's secure storage. Never substituted into rendered prompts. |
-| `userConfig.auth_email`, `dev_url`, `defect_tracker_*` | Non-sensitive. Stored in `settings.json`. |
+| `userConfig.auth_username`, `dev_url`, `default_role`, `available_roles`, `auth_storage_state_path`, etc. | Non-sensitive. Stored in `settings.json`. |
 
 ## Out of scope
 
@@ -59,13 +59,15 @@ local filesystem and shell access. The plugin itself adds:
 
 ## Prompt-injection guarantees
 
-Plugin-shipped subagents (`route-discoverer`, `page-analyzer`, `test-author`,
-`test-runner`, `catalog-reconciler`) cannot declare `hooks`, `mcpServers`, or
+Plugin-shipped subagents (`route-discoverer`, `test-author`,
+`catalog-reconciler`) cannot declare `hooks`, `mcpServers`, or
 `permissionMode` per the [Claude Code plugin
-spec](https://code.claude.com/docs/en/plugins-reference#agents), so a malicious
-target site cannot escalate privilege through a runner. The supervisor validates
-every `result.md` against `scripts/verify-result.mjs` before treating its
-contents as authoritative.
+spec](https://code.claude.com/docs/en/plugins-reference#agents). The two
+browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) run at project
+scope — they declare inline `mcpServers` and are copied into `.claude/agents/`
+by `/qa-catalog:init`, so a malicious target site cannot escalate privilege
+through a runner. The supervisor validates every `result.md` against
+`scripts/verify-result.mjs` before treating its contents as authoritative.
 
 Sensitive `userConfig` values (currently only `auth_password`) are never
 substituted into skill/agent rendered content — only into `mcpServers.env`. This
