@@ -1,10 +1,14 @@
 # QA My App
 
+<p align="center">
+  <img src="assets/banner.png" alt="QA My App — autonomous end-to-end QA as a Claude Code plugin" width="100%" />
+</p>
+
 [![Validate plugin](https://github.com/elwizard33/qa-my-app/actions/workflows/validate.yml/badge.svg)](https://github.com/elwizard33/qa-my-app/actions/workflows/validate.yml)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://code.claude.com/docs/en/plugins)
 [![plugin validate --strict](https://img.shields.io/badge/plugin%20validate-strict-success)](https://code.claude.com/docs/en/plugins-reference)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
 
 > **End-to-end QA testing as a Claude Code plugin.** Drop it into any web-app repo and Claude detects the framework, walks every page in a real browser, drives every form / modal / button / role gate, runs the whole platform in parallel, and reports back with screenshots, console logs, network traces, and filed defects. No test code to write, no fixtures to wire — the plugin understands your app from the source.
 
