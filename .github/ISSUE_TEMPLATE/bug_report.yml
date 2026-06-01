@@ -1,0 +1,99 @@
+name: Bug report
+description: Something is broken in the qa-catalog plugin (skill, agent, hook, validation, install).
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug! Please fill the form below — every field helps us reproduce.
+  - type: input
+    id: claude-code-version
+    attributes:
+      label: Claude Code version
+      description: Output of `claude --version`.
+      placeholder: "e.g. 2.1.143"
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: qa-catalog plugin version
+      description: From `.claude-plugin/plugin.json` `version` field or `/plugin` picker.
+      placeholder: "e.g. 0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux (Ubuntu/Debian/Fedora/Arch/other)
+        - WSL2
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Framework under test
+      description: Output of `node scripts/detect-framework.mjs` from the affected project.
+      placeholder: "e.g. next-app-dir, sveltekit, remix"
+    validations:
+      required: true
+  - type: dropdown
+    id: which-skill
+    attributes:
+      label: Which skill / command did you run?
+      multiple: true
+      options:
+        - "/qa-catalog:init"
+        - "/qa-catalog:scan"
+        - "/qa-catalog:sync"
+        - "/qa-catalog:run"
+        - "/qa-catalog:run-all"
+        - SessionStart hook
+        - PostToolUse hook
+        - Plugin install / validation
+        - Other (describe below)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: One paragraph describing the actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal sequence of slash commands / file edits / user-config values to trigger the bug.
+      placeholder: |
+        1. /plugin install qa-catalog@qa-my-app
+        2. /qa-catalog:init http://localhost:3000
+        3. Observe: ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / transcript snippets
+      description: Paste any error output, stack traces, or relevant transcript lines. Redact secrets.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checklist
+      options:
+        - label: I verified `npx -y @anthropic-ai/claude-code plugin validate . --strict` still passes locally.
+          required: false
+        - label: I redacted credentials, tokens, and personally identifying info from the logs above.
+          required: true

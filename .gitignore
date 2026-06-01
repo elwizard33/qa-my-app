@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+.vscode/
+.idea/
+
+# Plugin runtime artifacts (created when the plugin runs against a target project)
+QA-tests/
+.playwright-mcp/

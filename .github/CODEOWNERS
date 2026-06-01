@@ -1,0 +1,20 @@
+# Code ownership for QA My App.
+# Lines later in the file override earlier ones — most-specific rule wins.
+
+# Default owner for everything in the repo.
+*                                @elwizard33
+
+# Manifest changes touch every install — owner must approve.
+/.claude-plugin/                 @elwizard33
+/plugin.json                     @elwizard33
+/marketplace.json                @elwizard33
+
+# Audit log is append-only; owner reviews to enforce stable F-NNN ids.
+/docs/AUDIT.md                   @elwizard33
+
+# CI workflows: action SHAs and permissions need owner sign-off.
+/.github/workflows/              @elwizard33
+
+# Browser agents installed into user projects — breaking changes need owner approval.
+/agents/qa-page-analyzer.md      @elwizard33
+/agents/qa-test-runner.md        @elwizard33

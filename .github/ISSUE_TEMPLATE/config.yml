@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability disclosure
+    url: https://github.com/elwizard33/qa-my-app/security/advisories/new
+    about: Please do NOT file public issues for security vulnerabilities. Use the GitHub Security Advisory flow described in SECURITY.md.
+  - name: Plugin install / Claude Code help
+    url: https://code.claude.com/docs/en/plugins
+    about: General Claude Code plugin help is in the official docs.
