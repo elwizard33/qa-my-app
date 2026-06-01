@@ -20,6 +20,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bas
 | Dev URL override | `${user_config.dev_url}` |
 | Parallel page-analyzer agents | `${user_config.parallel_agents}` |
 | Parallel test-author agents | `${user_config.parallel_test_authors}` |
+| Browser engine | `${user_config.browser_engine}` |
 | Browser channel | `${user_config.browser_channel}` |
 | Headless | `${user_config.browser_headless}` |
 | Settle ms | `${user_config.settle_ms}` |
@@ -42,7 +43,7 @@ Resolve the effective dev URL in this order: `$ARGUMENTS` → `${user_config.dev
 
 ### Phase 0 — Install project-level browser agents
 
-Before anything else, install the two browser-driving agents into `.claude/agents/` so every subsequent parallel spawn gets its own isolated Playwright process. These agents declare `mcpServers` inline — a capability that is blocked on plugin-shipped agents but fully supported in project-level agents.
+Before anything else, install the two browser-driving agents into `.claude/agents/` so every subsequent parallel spawn gets its own isolated browser process. These agents declare `mcpServers` inline — a capability that is blocked on plugin-shipped agents but fully supported in project-level agents.
 
 ```bash
 mkdir -p .claude/agents
@@ -55,7 +56,28 @@ For each of the two template files, check whether the project-level copy already
 
 If either file already exists (e.g. the user has customised it), leave it unchanged.
 
-> **Why this matters.** Plugin-shipped subagents cannot declare inline `mcpServers` ([silently ignored per the docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) for security), so they would all have to share the single Playwright MCP server declared in `.mcp.json`. Sharing requires per-spawn isolation via `browser_new_context`, but `@playwright/mcp` does not expose that tool — parallel runs would bleed cookies/localStorage across agents. The project-level agents each start their own `npx @playwright/mcp@latest` subprocess — true OS-process isolation with no coordination needed.
+**Apply the selected browser engine.** The templates ship with the Playwright `mcpServers` block. If `${user_config.browser_engine}` is **not** `playwright` (or empty), edit the freshly-written `.claude/agents/qa-page-analyzer.md` **and** `.claude/agents/qa-test-runner.md`, replacing the `mcpServers:` frontmatter block with the one matching the chosen engine. Do not touch a file you left unchanged because it already existed.
+
+- `chrome-devtools`:
+  ```yaml
+  mcpServers:
+    - chrome-devtools:
+        type: stdio
+        command: npx
+        args: ["-y", "chrome-devtools-mcp@latest", "--isolated", "--headless"]
+  ```
+  (Drop `--headless` if `${user_config.browser_headless}` is `false`. Chrome-only.)
+- `stagehand` (Browserbase cloud, requires `BROWSERBASE_API_KEY` in the environment):
+  ```yaml
+  mcpServers:
+    - browserbase:
+        type: http
+        url: "https://mcp.browserbase.com/mcp?browserbaseApiKey=${BROWSERBASE_API_KEY}"
+  ```
+
+See [docs/browsers/](../../docs/browsers/README.md) for per-engine setup and caveats (Stagehand has limited screenshot/console/network capture).
+
+> **Why this matters.** Plugin-shipped subagents cannot declare inline `mcpServers` ([silently ignored per the docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) for security), so they would all have to share the single MCP server declared in `.mcp.json`. Sharing requires per-spawn isolation that `@playwright/mcp` does not expose — parallel runs would bleed cookies/localStorage across agents. The project-level agents each start their own browser subprocess (or cloud session) — true isolation with no coordination needed.
 
 ---
 

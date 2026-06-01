@@ -49,10 +49,16 @@
       "min": 1,
       "max": 12
     },
+    "browser_engine": {
+      "type": "string",
+      "title": "Browser engine",
+      "description": "Which browser-automation MCP the project-level qa-page-analyzer / qa-test-runner agents drive: playwright (default, full screenshot/console/network fidelity, all browsers), chrome-devtools (Chrome-only, DevTools-grade performance + network insight), or stagehand (Browserbase cloud browser, AI-driven act/observe/extract — experimental). /qa-catalog:init writes the matching mcpServers block into .claude/agents/. See docs/browsers/.",
+      "default": "playwright"
+    },
     "browser_channel": {
       "type": "string",
       "title": "Browser channel",
-      "description": "Playwright browser to launch: chromium (default), chrome, msedge, firefox, webkit.",
+      "description": "For the playwright / chrome-devtools engines, which browser to launch: chromium (default), chrome, msedge, firefox, webkit. Ignored by the stagehand (cloud) engine.",
       "default": "chromium"
     },
     "browser_headless": {

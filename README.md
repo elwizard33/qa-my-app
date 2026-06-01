@@ -12,14 +12,14 @@
 
 > **End-to-end QA testing as a Claude Code plugin.** Drop it into any web-app repo and Claude detects the framework, walks every page in a real browser, drives every form / modal / button / role gate, runs the whole platform in parallel, and reports back with screenshots, console logs, network traces, and filed defects. No test code to write, no fixtures to wire — the plugin understands your app from the source.
 
-**At a glance:** 5 slash commands · 5 subagents · 1 bundled Playwright MCP · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
+**At a glance:** 5 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
 
 ## Contents
 
 - [Install](#install) · [Quickstart](#quickstart) · [When to use it](#when-to-use-qa-my-app)
 - [The task catalog](#the-task-catalog-how-qa-my-app-keeps-runs-deterministic) · [What `/qa-catalog:init` does](#what-happens-during-qa-cataloginit) · [Issue trackers](#connecting-issue-trackers-github--jira--azure-devops)
 - [Generated layout](#generated-layout-in-the-target-project) · [Architecture](#architecture) · [Subagents](#subagents) · [Frameworks](#supported-frameworks)
-- [Settings](#settings-userconfig) · [Customization](#customization) · [Compliance](#claude-code-compliance-notes)
+- [Settings](#settings-userconfig) · [Browser engines](#browser-engines) · [Customization](#customization) · [Compliance](#claude-code-compliance-notes)
 - [Status](#status) · [Changelog](CHANGELOG.md) · [Audit log](docs/AUDIT.md) · [Architecture deep-dive](docs/ARCHITECTURE.md)
 
 ---
@@ -27,7 +27,7 @@
 ## What QA My App does
 
 - **Auto-discovers your stack and routes.** Next.js, Remix, SvelteKit, Angular, Vue, Vite+React, Blazor, Flutter web, plain HTML — if it serves HTTP it's testable. Languages, package manager, build tool, UI libs, state stores, validators and existing test frameworks are detected too.
-- **Drives every page in a real browser.** A Playwright MCP per agent, isolated contexts, every form field probed for validation, every modal opened, every destructive button rehearsed.
+- **Drives every page in a real browser.** A dedicated browser MCP per agent, isolated contexts, every form field probed for validation, every modal opened, every destructive button rehearsed. Browser-engine agnostic — Playwright by default, with Chrome DevTools and Stagehand/Browserbase as drop-in alternatives (see [docs/browsers/](docs/browsers/README.md)).
 - **Runs end-to-end at platform scale.** Parallel browser agents fan out across the whole app. A 30-route SPA full regression goes from ~40 minutes serial to ~7 minutes at `parallel_test_runners: 6`.
 - **Files real defects.** Hook up GitHub, Jira, or Azure DevOps via MCP and the runner files failures directly as issues / tickets / work items with screenshots and reproduction steps attached.
 - **Stays in sync with your code.** A Git pre-commit hook + Claude session hooks fingerprint every analysed source file and flag drift the moment a UI changes, so the next run tests **what the UI actually does** — not a stale plan.
@@ -64,7 +64,7 @@ The catalog is the engine room. You don't have to look at it — but it's why su
 
 1. **Detect the framework** (Next.js, Remix, SvelteKit, Angular, Vue, Vite+React, Blazor, Flutter web, plain HTML).
 2. **Discover every route** statically from the source tree, with auth/role/guard/HTTP-method metadata.
-3. **Open each page** in a real browser via the bundled Playwright MCP and inventory every form field, validator, button, modal, dialog, tab, and table.
+3. **Open each page** in a real browser via the configured browser engine (Playwright by default) and inventory every form field, validator, button, modal, dialog, tab, and table.
 4. **Author deep test tasks** into `QA-tests/tasks/` using an enforced template — happy path + validation matrix + modal coverage + button coverage + edge cases.
 5. **Watch the codebase** via SessionStart + PostToolUse hooks and a Git pre-commit hook. When a route's source drifts from the catalog, you're nudged (or commits are blocked) until you run `/qa-catalog:sync`.
 6. **Run one task, a subset, or every task in parallel** with `/qa-catalog:run` / `/qa-catalog:run-all`. Each spawn writes a date-stamped `result.md` with embedded screenshots, plus a top-level run summary and an append-only history index.
@@ -109,7 +109,7 @@ The local copy takes precedence over any installed marketplace version for that 
 
 </details>
 
-> **Playwright MCP** is declared in this plugin's `.mcp.json` (stdio, `npx @playwright/mcp@latest`) and is scoped to the plugin only. Project-level browser agents (`qa-page-analyzer`, `qa-test-runner`) declare their **own** inline `mcpServers` so every parallel spawn gets a dedicated Playwright process — that's why `/qa-catalog:init` Phase 0 copies them into `.claude/agents/`.
+> **Browser engine.** This plugin is browser-engine agnostic. `.mcp.json` declares a plugin-scoped **Playwright** MCP (stdio, `npx @playwright/mcp@latest`) for the main session. The project-level browser agents (`qa-page-analyzer`, `qa-test-runner`) declare their **own** inline `mcpServers` so every parallel spawn gets a dedicated browser process — that's why `/qa-catalog:init` Phase 0 copies them into `.claude/agents/`. Set `browser_engine` to `playwright` (default), `chrome-devtools`, or `stagehand` and init writes the matching block. See [docs/browsers/](docs/browsers/README.md).
 
 > Slash commands are exposed under the `qa-catalog:` namespace (that's the plugin's internal id) — e.g. `/qa-catalog:run-all`. The brand is QA My App; the namespace is a Claude Code plumbing detail.
 
@@ -140,10 +140,10 @@ The init skill is the orchestrator. It runs in your main Claude Code session and
 | Phase | Who | What | Typical scale |
 |---|---|---|---|
 | **_pre-amble_** Stack & framework detection | `scripts/detect-framework.mjs` (invoked in the skill's `## Project context`) | Detects framework, languages, runtime, package manager, build tool, monorepo flavor, UI libraries, state management, forms, validation libs, HTTP layer, styling, existing test/E2E frameworks. The full descriptor is persisted into `catalog.json.stack` at Phase 5. | seconds |
-| **0. Install project-level browser agents** | main session | Copies `agents/qa-page-analyzer.md` and `agents/qa-test-runner.md` from the plugin into the project's `.claude/agents/` directory (left untouched if the user has customised them). These two agents declare inline `mcpServers` — a capability silently ignored on plugin-shipped agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent), so they must live at project scope for every parallel spawn to get its own Playwright process. Commit them so the whole team shares the same browser-agent versions. | seconds |
+| **0. Install project-level browser agents** | main session | Copies `agents/qa-page-analyzer.md` and `agents/qa-test-runner.md` from the plugin into the project's `.claude/agents/` directory (left untouched if the user has customised them), and writes the `mcpServers` block for the selected `browser_engine`. These two agents declare inline `mcpServers` — a capability silently ignored on plugin-shipped agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent), so they must live at project scope for every parallel spawn to get its own browser process. Commit them so the whole team shares the same browser-agent versions. | seconds |
 | **1. Issue-tracker MCPs** | main session + `AskUserQuestion` | Detects existing MCP connections via `claude mcp list`, then asks (multi-select) whether to wire up **GitHub**, **Jira (Atlassian)**, or **Azure DevOps**. Prints the exact `claude mcp add` commands for the ones you pick — OAuth/PATs happen in your browser, never in the transcript. Skippable. | seconds |
 | **2. Route discovery** | `qa-catalog:route-discoverer` (1×) | Walks the source tree, returns rich JSON per route: path, source file, requiresAuth, rolesAllowed, guards, httpMethods, dynamicParams, layoutChain, featureFlags. | tens of seconds |
-| **3. Per-page deep analysis** | `qa-page-analyzer` (× `parallel_agents`, project-level) | Each instance starts its own dedicated `npx @playwright/mcp@latest` process — true OS-process isolation, no shared cookies / localStorage. Navigates one route, reads the source for validation rules, drives every form/modal/button/dialog/tab/table read-only, captures console + network. Returns a deep element-inventory JSON. | minutes — dominant cost |
+| **3. Per-page deep analysis** | `qa-page-analyzer` (× `parallel_agents`, project-level) | Each instance starts its own dedicated browser process (engine per `browser_engine`) — true isolation, no shared cookies / localStorage. Navigates one route, reads the source for validation rules, drives every form/modal/button/dialog/tab/table read-only, captures console + network. Returns a deep element-inventory JSON. | minutes — dominant cost |
 | **4. Task authoring** | `qa-catalog:test-author` (× `parallel_test_authors`) | Pure markdown. Converts each Page Analysis into one or more `QA-tests/tasks/T*.md` files using the enforced template (happy path + validation matrix + modal + button + edge cases). | tens of seconds |
 | **5. Catalog write** | main session | Writes `catalog.json` (with `stack` + `integrations` blocks), `catalog.md`, `routes/*.md`, `.qa-catalog/fingerprints.json`. | seconds |
 | **6. Pre-commit hook install** | `scripts/install-precommit.sh` | Drops a Git pre-commit hook that re-fingerprints staged source files and blocks the commit if the catalog is stale. | seconds |
@@ -354,8 +354,9 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `parallel_agents` | `3` | Concurrent `page-analyzer` agents during init/scan/sync (1–12). |
 | `parallel_test_authors` | `4` | Concurrent `test-author` agents during init/scan/sync (1–16). |
 | `parallel_test_runners` | `3` | Concurrent `test-runner` agents during `/qa-catalog:run-all` (1–12). |
-| `browser_channel` | `chromium` | `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. |
-| `browser_headless` | `true` | Set false to watch agents work. |
+| `browser_engine` | `playwright` | Browser-automation engine the browser agents drive: `playwright` (default, all browsers, full fidelity), `chrome-devtools` (Chrome-only, perf + Lighthouse), `stagehand` (Browserbase cloud, AI act/observe/extract — experimental). See [docs/browsers/](docs/browsers/README.md). |
+| `browser_channel` | `chromium` | For `playwright` / `chrome-devtools`: `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. Ignored by `stagehand`. |
+| `browser_headless` | `true` | Set false to watch agents work. Ignored by `stagehand` (cloud is always headless). |
 | `settle_ms` | `5000` | Wait after navigation before snapshot (0–60000). |
 | `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state`. |
 | `auth_username` | _empty_ | Used when `auth_mode = shared-credentials`. |
@@ -366,6 +367,26 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `task_depth` | `deep` | `deep` / `standard` / `smoke`. |
 | `max_tasks_per_route` | `6` | Upper bound the test-author enforces (1–20). |
 | `exclude_globs` | _empty_ | Multi-value list (`multiple: true`) of globs to skip during route discovery (e.g. `**/storybook/**`, `**/__tests__/**`). |
+
+---
+
+## Browser engines
+
+QA My App is **browser-engine agnostic**. The two browser-driving agents talk to a browser through an MCP server declared inline in their frontmatter, so swapping that one block swaps the engine. Pick one with the `browser_engine` setting; `/qa-catalog:init` (and `/qa-catalog:sync`) writes the matching `mcpServers` block into `.claude/agents/`.
+
+| Engine (`browser_engine`) | MCP server | Browsers | Runs where | Best for |
+|---|---|---|---|---|
+| `playwright` *(default)* | `@playwright/mcp` | Chromium, Chrome, Edge, Firefox, WebKit | Local process per spawn | **Default.** Full screenshot / console / network fidelity, cross-browser, isolated local processes. |
+| `chrome-devtools` | `chrome-devtools-mcp` | Chrome / Chrome for Testing only | Local process per spawn | DevTools-grade performance traces, Lighthouse audits, deep network + console. |
+| `stagehand` | Browserbase MCP (Stagehand) | Cloud (Browserbase) | Remote session per spawn | AI-driven `act` / `observe` / `extract`, no local browser. **Experimental** — limited screenshot/console/network capture. |
+
+**To switch engines:** set `browser_engine` in `/plugin`, then re-run `/qa-catalog:init` (or edit the `mcpServers:` block in your project's `.claude/agents/qa-page-analyzer.md` and `qa-test-runner.md` and commit). Full per-engine setup, requirements, and caveats live in **[docs/browsers/](docs/browsers/README.md)**:
+
+- [Playwright (default)](docs/browsers/playwright.md)
+- [Chrome DevTools](docs/browsers/chrome-devtools.md)
+- [Stagehand / Browserbase](docs/browsers/stagehand.md)
+
+> For full-fidelity QA runs (the screenshot-heavy `result.md` schema), stay on `playwright` or `chrome-devtools`. The Stagehand/Browserbase engine is best for AI-driven exploratory acts and does not expose screenshot/console/network primitives.
 
 ---
 
