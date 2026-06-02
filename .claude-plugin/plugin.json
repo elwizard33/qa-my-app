@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "qa-catalog",
+  "displayName": "QA My App",
+  "description": "End-to-end QA testing as a Claude Code plugin. Auto-discovers your stack and routes, drives every page in a real browser via the bundled Playwright MCP, runs the whole platform in parallel test-runner subagents, verifies each result against a schema, and files defects to GitHub/Jira/Azure DevOps if connected. No test code to write — the plugin understands your app from source.",
+  "version": "0.1.0",
+  "author": {
+    "name": "elwizard33",
+    "email": "elwizard33@users.noreply.github.com",
+    "url": "https://github.com/elwizard33"
+  },
+  "homepage": "https://github.com/elwizard33/qa-my-app",
+  "repository": "https://github.com/elwizard33/qa-my-app",
+  "license": "MIT",
+  "keywords": ["qa", "testing", "playwright", "claude-code", "claude-code-plugin", "e2e", "qa-automation", "regression-testing", "test-generation", "route-discovery"],
+  "agents": [
+    "./agents/route-discoverer.md",
+    "./agents/test-author.md",
+    "./agents/catalog-reconciler.md"
+  ],
+  "userConfig": {
+    "dev_url": {
+      "type": "string",
+      "title": "Dev server URL",
+      "description": "Base URL where the app under test is running (e.g. http://localhost:3000). Used by every browser-driving subagent. Leave blank to auto-detect from the framework manifest at scan time.",
+      "default": ""
+    },
+    "parallel_agents": {
+      "type": "number",
+      "title": "Parallel page-analyzer agents",
+      "description": "Maximum number of page-analyzer subagents the orchestrator runs concurrently during /qa-catalog:init and /qa-catalog:scan. Each agent uses its own isolated Playwright browser context. Set to 1 to serialize. Recommended: 2-4 on a laptop, 4-8 on a workstation.",
+      "default": 3,
+      "min": 1,
+      "max": 12
+    },
+    "parallel_test_authors": {
+      "type": "number",
+      "title": "Parallel test-author agents",
+      "description": "Maximum concurrent test-author subagents (pure markdown generation, no browser). Safe to keep high.",
+      "default": 4,
+      "min": 1,
+      "max": 16
+    },
+    "parallel_test_runners": {
+      "type": "number",
+      "title": "Parallel test-runner agents",
+      "description": "Maximum concurrent test-runner subagents the orchestrator runs during /qa-catalog:run-all. Each runner drives its own isolated Playwright browser context against the shared MCP server. Set to 1 to serialize a full-platform regression. Recommended: 2-4 on a laptop, 4-8 on a workstation. The shared dev server is the practical ceiling.",
+      "default": 3,
+      "min": 1,
+      "max": 12
+    },
+    "browser_engine": {
+      "type": "string",
+      "title": "Browser engine",
+      "description": "Which browser-automation MCP the project-level qa-page-analyzer / qa-test-runner agents drive: playwright (default, full screenshot/console/network fidelity, all browsers), chrome-devtools (Chrome-only, DevTools-grade performance + network insight), or stagehand (Browserbase cloud browser, AI-driven act/observe/extract — experimental). /qa-catalog:init writes the matching mcpServers block into .claude/agents/. See docs/browsers/.",
+      "default": "playwright"
+    },
+    "browser_channel": {
+      "type": "string",
+      "title": "Browser channel",
+      "description": "For the playwright / chrome-devtools engines, which browser to launch: chromium (default), chrome, msedge, firefox, webkit. Ignored by the stagehand (cloud) engine.",
+      "default": "chromium"
+    },
+    "browser_headless": {
+      "type": "boolean",
+      "title": "Run browser headless",
+      "description": "Run the Playwright browser without a visible window. Set false to watch agents interact with the app while they analyze.",
+      "default": true
+    },
+    "settle_ms": {
+      "type": "number",
+      "title": "Per-page settle time (ms)",
+      "description": "Milliseconds the page-analyzer waits after navigation before snapshotting. Increase for slow SPAs.",
+      "default": 5000,
+      "min": 0,
+      "max": 60000
+    },
+    "auth_mode": {
+      "type": "string",
+      "title": "Auth mode",
+      "description": "How protected routes are authenticated: none, shared-credentials (use the username/password below for every protected route), storage-state (reuse a Playwright storageState JSON from auth_storage_state_path).",
+      "default": "none"
+    },
+    "auth_username": {
+      "type": "string",
+      "title": "Default auth username",
+      "description": "Username used when auth_mode is shared-credentials.",
+      "default": ""
+    },
+    "auth_password": {
+      "type": "string",
+      "title": "Default auth password",
+      "description": "Password used when auth_mode is shared-credentials. Stored in the OS keychain.",
+      "sensitive": true,
+      "default": ""
+    },
+    "auth_storage_state_path": {
+      "type": "file",
+      "title": "Playwright storageState file",
+      "description": "Path to a Playwright storageState JSON file (cookies + localStorage). Used when auth_mode is storage-state.",
+      "default": ""
+    },
+    "default_role": {
+      "type": "string",
+      "title": "Default user role",
+      "description": "Role to assume when a route doesn't specify one. Tasks reference this in Preconditions.",
+      "default": "anonymous"
+    },
+    "available_roles": {
+      "type": "string",
+      "multiple": true,
+      "title": "Available roles",
+      "description": "Roles the app supports (e.g. admin, manager, user, guest). The route-discoverer cross-references these against route guards.",
+      "default": ""
+    },
+    "task_depth": {
+      "type": "string",
+      "title": "Task depth",
+      "description": "deep (default): exhaustive validation matrix + modal + button coverage. standard: happy path + key edge cases. smoke: title + first form only. Affects the test-author's enforced template.",
+      "default": "deep"
+    },
+    "max_tasks_per_route": {
+      "type": "number",
+      "title": "Max tasks per route",
+      "description": "Upper bound the test-author enforces. Default 6.",
+      "default": 6,
+      "min": 1,
+      "max": 20
+    },
+    "exclude_globs": {
+      "type": "string",
+      "multiple": true,
+      "title": "Excluded source globs",
+      "description": "Globs to skip during route discovery (e.g. **/storybook/**, **/__tests__/**).",
+      "default": ""
+    }
+  }
+}

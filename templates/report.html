@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>QA run {{runId}}</title>
+<meta name="color-scheme" content="light dark" />
+{{refreshMeta}}
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --card: #161b22;
+    --border: #30363d;
+    --pass: #3fb950;
+    --fail: #f85149;
+    --blocked: #d29922;
+    --pending: #58a6ff;
+    --running: #a371f7;
+    --neutral: #6e7681;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f6f8fa; --fg:#1f2328; --muted:#656d76; --card:#fff; --border:#d0d7de; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 1.75rem 2rem 3rem; background: var(--bg); color: var(--fg);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
+  h1 code { font-size: 1rem; vertical-align: middle; }
+  .status-line { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem;
+                 color: var(--muted); font-size: 13px; margin-bottom: 1.5rem; }
+  .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+              background: var(--pass); margin-right: .35rem; vertical-align: middle;
+              animation: pulse 1.2s ease-in-out infinite; }
+  .live-dot.done { background: var(--muted); animation: none; }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.35 } }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          gap: .75rem; margin-bottom: 1.25rem; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+          padding: .65rem .9rem; }
+  .stat .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  .stat .value { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
+  .stat.pass .value { color: var(--pass); }
+  .stat.fail .value { color: var(--fail); }
+  .stat.blocked .value { color: var(--blocked); }
+  .stat.running .value { color: var(--running); }
+  .progress { background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+              height: 14px; overflow: hidden; margin-bottom: 1.5rem; display: flex; }
+  .progress span { display: block; height: 100%; transition: width .25s ease; }
+  .progress .p { background: var(--pass); }
+  .progress .f { background: var(--fail); }
+  .progress .b { background: var(--blocked); }
+  .progress .v { background: var(--neutral); }
+  .progress .r { background: var(--running); animation: shimmer 1.5s linear infinite;
+                 background-image: linear-gradient(90deg, var(--running) 0%, #c89dff 50%, var(--running) 100%);
+                 background-size: 200% 100%; }
+  @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+  table { width: 100%; border-collapse: collapse; background: var(--card);
+          border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  th, td { padding: .55rem .8rem; text-align: left; border-bottom: 1px solid var(--border);
+           vertical-align: top; font-size: 13px; }
+  th { background: rgba(110,118,129,.1); font-weight: 600; font-size: 11px;
+       text-transform: uppercase; color: var(--muted); letter-spacing: .05em; }
+  tr:last-child td { border-bottom: 0; }
+  tr:hover td { background: rgba(110,118,129,.06); }
+  code { background: rgba(110,118,129,.18); padding: 0 .35em; border-radius: 3px;
+         font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .badge { display: inline-block; padding: .12rem .55rem; border-radius: 999px;
+           font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em;
+           white-space: nowrap; }
+  .badge.pass, .badge.complete { background: rgba(63,185,80,.16); color: var(--pass); }
+  .badge.fail { background: rgba(248,81,73,.16); color: var(--fail); }
+  .badge.blocked { background: rgba(210,153,34,.16); color: var(--blocked); }
+  .badge.pending { background: rgba(88,166,255,.16); color: var(--pending); }
+  .badge.dispatched, .badge.verifying { background: rgba(163,113,247,.16); color: var(--running); }
+  .badge.failed-verification { background: rgba(248,81,73,.16); color: var(--fail); }
+  .dash { color: var(--muted); }
+  a { color: var(--pending); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .defects { margin-top: 1.75rem; }
+  .defects ul { margin: .25rem 0 0; padding-left: 1.25rem; }
+  .defects li { font-size: 13px; padding: .15rem 0; }
+  .verif { margin-top: 1.5rem; }
+  .verif details { background: var(--card); border: 1px solid var(--border);
+                   border-radius: 6px; padding: .5rem .85rem; }
+  .verif details + details { margin-top: .35rem; }
+  footer { color: var(--muted); margin-top: 2.5rem; font-size: 12px;
+           display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+  .controls { float: right; font-size: 12px; }
+  .controls label { color: var(--muted); margin-right: .5rem; cursor: pointer; user-select: none; }
+  .controls input { vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <label><input type="checkbox" id="auto" {{autoChecked}}> auto-refresh</label>
+  <a href="javascript:location.reload()">refresh now</a>
+</div>
+
+<h1>QA run <code>{{runId}}</code></h1>
+
+<div class="status-line">
+  <span><span class="live-dot {{liveDotClass}}"></span>{{liveStatus}}</span>
+  <span>started <code>{{startedAt}}</code></span>
+  <span>{{finishedLabel}} <code>{{finishedAt}}</code></span>
+  <span>filter <code>{{filter}}</code></span>
+</div>
+
+<div class="grid">
+  <div class="stat"><div class="label">Tasks</div><div class="value">{{tasksTotal}}</div></div>
+  <div class="stat pass"><div class="label">Pass</div><div class="value">{{tasksPass}}</div></div>
+  <div class="stat fail"><div class="label">Fail</div><div class="value">{{tasksFail}}</div></div>
+  <div class="stat blocked"><div class="label">Blocked</div><div class="value">{{tasksBlocked}}</div></div>
+  <div class="stat running"><div class="label">In flight</div><div class="value">{{tasksInFlight}}</div></div>
+  <div class="stat"><div class="label">Pending</div><div class="value">{{tasksPending}}</div></div>
+</div>
+
+<div class="progress" title="progress">
+  <span class="p" style="width: {{pctPass}}%"></span>
+  <span class="f" style="width: {{pctFail}}%"></span>
+  <span class="b" style="width: {{pctBlocked}}%"></span>
+  <span class="v" style="width: {{pctVerifFail}}%"></span>
+  <span class="r" style="width: {{pctRunning}}%"></span>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Task</th><th>Route</th><th>Status</th><th>Verdict</th>
+      <th>Try</th><th>TCs (P / F / B)</th><th>Console / Net</th>
+      <th>Duration</th><th>Defects</th><th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{rows}}
+  </tbody>
+</table>
+
+{{defectsSection}}
+
+{{verifSection}}
+
+<footer>
+  <span>auto-refresh: <strong>{{refreshLabel}}</strong></span>
+  <span>generated <code>{{generatedAt}}</code></span>
+  <span>qa-catalog plugin</span>
+</footer>
+
+<script>
+  (function () {
+    var done = {{doneJs}};
+    var refreshMs = {{refreshMs}};
+    var key = "qa-catalog-autorefresh";
+    var box = document.getElementById("auto");
+    if (!box) return;
+    var stored = localStorage.getItem(key);
+    if (stored === "off") box.checked = false;
+    if (done) {
+      box.checked = false;
+      box.disabled = true;
+      return;
+    }
+    function arm() {
+      if (!box.checked) return;
+      setTimeout(function () { if (box.checked) location.reload(); }, refreshMs);
+    }
+    box.addEventListener("change", function () {
+      localStorage.setItem(key, box.checked ? "on" : "off");
+      var meta = document.querySelector('meta[http-equiv="refresh"]');
+      if (meta) meta.remove();
+      if (box.checked) arm();
+    });
+    if (!box.checked) {
+      var meta = document.querySelector('meta[http-equiv="refresh"]');
+      if (meta) meta.remove();
+    } else {
+      arm();
+    }
+  })();
+</script>
+
+</body>
+</html>

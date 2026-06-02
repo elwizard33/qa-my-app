@@ -1,0 +1,45 @@
+name: Feature request
+description: Propose a new skill, agent, hook, framework adapter, or integration.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Please describe the problem first, then the proposal. We optimize for "would this help every install of qa-catalog, or just my repo?" — both are valid but they get triaged differently.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: One paragraph. Focus on the user/QA workflow, not the implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should qa-catalog do? Concrete shape — new skill name, new agent, new userConfig field, new hook event, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Things you tried or rejected, and why.
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: How broadly does this apply?
+      options:
+        - Affects every install (core)
+        - Affects users of a specific framework / integration
+        - Affects only my repo / niche use case
+    validations:
+      required: true
+  - type: checkboxes
+    id: willing-to-contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to open a PR for this.
+          required: false

@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/catalog-diff.mjs", "--session-start"],
+            "timeout": 15,
+            "statusMessage": "qa-catalog: checking drift"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/catalog-diff.mjs", "--silent", "--post-tool"],
+            "timeout": 10,
+            "async": true,
+            "statusMessage": "qa-catalog: drift check"
+          }
+        ]
+      }
+    ]
+  }
+}
