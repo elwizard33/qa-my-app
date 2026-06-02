@@ -14,6 +14,8 @@
 
 **At a glance:** 5 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
 
+> 📖 **Full documentation:** [elwizard33.github.io/qa-my-app](https://elwizard33.github.io/qa-my-app/) — install guide, command reference, architecture, browser engines, and publishing.
+
 ## Contents
 
 - [Install](#install) · [Quickstart](#quickstart) · [When to use it](#when-to-use-qa-my-app)

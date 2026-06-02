@@ -1,0 +1,25 @@
+---
+title: What /qa-catalog:init does
+description: The bootstrap orchestrator — phase by phase.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The init skill is the orchestrator. It runs in your main Claude Code session and fans work out to specialised subagents per the canonical Claude Code pattern ([sub-agents docs](https://code.claude.com/docs/en/sub-agents) — parallel research with focused workers reporting back). Phases are sequenced because each one depends on the previous, but the page-analysis and task-author phases parallelize internally.
+
+| Phase | Who | What | Typical scale |
+|---|---|---|---|
+| **pre-amble** Stack & framework detection | `scripts/detect-framework.mjs` | Detects framework, languages, runtime, package manager, build tool, monorepo flavor, UI libraries, state management, forms, validation libs, HTTP layer, styling, existing test/E2E frameworks. Persisted into `catalog.json.stack` at Phase 5. | seconds |
+| **0. Install project-level browser agents** | main session | Copies `qa-page-analyzer.md` and `qa-test-runner.md` into the project's `.claude/agents/` and writes the `mcpServers` block for the selected `browser_engine`. These agents declare inline `mcpServers` — a capability silently ignored on plugin-shipped agents — so they must live at project scope for every parallel spawn to get its own browser process. | seconds |
+| **1. Issue-tracker MCPs** | main session + `AskUserQuestion` | Detects existing MCP connections via `claude mcp list`, then asks (multi-select) whether to wire up **GitHub**, **Jira (Atlassian)**, or **Azure DevOps**. Prints the exact `claude mcp add` commands — OAuth/PATs happen in your browser, never in the transcript. Skippable. | seconds |
+| **2. Route discovery** | `qa-catalog:route-discoverer` (1×) | Walks the source tree, returns rich JSON per route: path, source file, requiresAuth, rolesAllowed, guards, httpMethods, dynamicParams, layoutChain, featureFlags. | tens of seconds |
+| **3. Per-page deep analysis** | `qa-page-analyzer` (× `parallel_agents`) | Each instance starts its own dedicated browser process — true isolation, no shared cookies/localStorage. Navigates one route, reads the source for validation rules, drives every form/modal/button/dialog/tab/table read-only, captures console + network. Returns a deep element-inventory JSON. | minutes — dominant cost |
+| **4. Task authoring** | `qa-catalog:test-author` (× `parallel_test_authors`) | Pure markdown. Converts each Page Analysis into one or more `QA-tests/tasks/T*.md` files using the enforced template. | tens of seconds |
+| **5. Catalog write** | main session | Writes `catalog.json` (with `stack` + `integrations`), `catalog.md`, `routes/*.md`, `.qa-catalog/fingerprints.json`. | seconds |
+| **6. Pre-commit hook install** | `scripts/install-precommit.sh` | Drops a Git pre-commit hook that re-fingerprints staged source files and blocks the commit if the catalog is stale. | seconds |
+
+<Aside type="caution" title="The first run takes longer">
+Phase 3 opens every discovered route in a real browser, one batch at a time (`parallel_agents` wide). For a typical 30-route SPA, expect **5–20 minutes** on first run depending on dev-server warm-up, network latency, auth-wall handling, and how much validation probing each page needs. Subsequent runs are incremental: `/qa-catalog:sync` only re-analyses routes whose source fingerprint changed.
+</Aside>
+
+Don't kill the session mid-init — the test-author phase writes files as analyses complete, so a partial init still produces partially-usable tasks, but the catalog won't be finalised until Phase 5.

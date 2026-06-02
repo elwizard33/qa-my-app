@@ -1,0 +1,73 @@
+---
+title: Stagehand / Browserbase
+description: Cloud browser with AI-driven act/observe/extract. Experimental.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`browser_engine: stagehand` — drives a **cloud** browser hosted on [Browserbase](https://www.browserbase.com/) through the Stagehand MCP server. Instead of low-level primitives, it exposes AI-driven, natural-language tools: `navigate`, `act`, `observe`, `extract`, plus session lifecycle (`start`/`end`).
+
+Reference: [Stagehand MCP setup](https://docs.stagehand.dev/v3/integrations/mcp/setup).
+
+## When to use it
+
+- You want browser automation without installing or maintaining local browsers.
+- You want resilient, AI-driven steps (`act("click the Sign in button")`, `extract("the order total")`) that tolerate small DOM changes.
+- You already have a Browserbase account.
+
+<Aside type="caution" title="Experimental — read the caveats">
+The Browserbase MCP surface centers on `act` / `observe` / `extract` / `navigate`. It does **not** expose screenshot-to-file, console-message, or network-request tools the way Playwright and Chrome DevTools do. Because `result.md` embeds screenshots and reports console/network failures, those sections will be **best-effort** on this engine. For full-fidelity QA runs, prefer [Playwright](/qa-my-app/browsers/playwright/) (default) or [Chrome DevTools](/qa-my-app/browsers/chrome-devtools/).
+</Aside>
+
+## Prerequisites
+
+1. A Browserbase account.
+2. A Browserbase **API key** and **Project ID** from the dashboard.
+
+## Configuration
+
+This plugin uses the **hosted (HTTP)** Browserbase MCP. `/qa-catalog:init` writes this `mcpServers` block into each project-level browser agent:
+
+```yaml
+mcpServers:
+  - browserbase:
+      type: http
+      url: "https://mcp.browserbase.com/mcp?browserbaseApiKey=${BROWSERBASE_API_KEY}"
+```
+
+Export your key before launching Claude Code so the `${BROWSERBASE_API_KEY}` placeholder resolves:
+
+```bash
+export BROWSERBASE_API_KEY="bb_live_..."
+export BROWSERBASE_PROJECT_ID="..."   # used by some optional query params
+```
+
+You can also register it from the CLI instead of the inline block:
+
+```bash
+claude mcp add --transport http browserbase \
+  "https://mcp.browserbase.com/mcp?browserbaseApiKey=$BROWSERBASE_API_KEY"
+```
+
+### Optional query parameters
+
+| Param | Purpose |
+|---|---|
+| `modelName` | LLM driving `act`/`extract` (default `google/gemini-2.5-flash-lite`). |
+| `modelApiKey` | Your own model key if you bring your own LLM. |
+| `proxies=true` | Route through Browserbase proxies. |
+| `advancedStealth=true` | Anti-bot stealth mode. |
+| `keepAlive=true` | Keep sessions warm between calls. |
+
+## Isolation & parallelism
+
+Each spawn opens its **own** Browserbase cloud session, so isolation is handled server-side — no shared local profile to worry about. Mind your Browserbase plan's concurrent-session limit when setting `parallel_agents` / `parallel_test_runners`.
+
+## Tool-name differences
+
+On this engine the agent uses `navigate`, `act`, `observe`, and `extract` instead of the `browser_*` primitives. Map app actions to natural-language `act` calls and read state with `observe` / `extract`. See the [capability map](/qa-my-app/browsers/#capability--tool-name-map).
+
+## Settings that do **not** apply
+
+- `browser_channel` is ignored — the cloud chooses the browser.
+- `browser_headless` is ignored — cloud sessions are headless by nature.

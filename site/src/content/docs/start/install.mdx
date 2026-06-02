@@ -1,0 +1,48 @@
+---
+title: Install
+description: Install the QA My App (qa-catalog) Claude Code plugin from its self-marketplace.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+Inside Claude Code, in any project:
+
+```text
+/plugin marketplace add elwizard33/qa-my-app
+/plugin install qa-catalog@qa-my-app
+/reload-plugins
+```
+
+That's it — the plugin is installed at **user scope** (available in every repo) and active in your current session.
+
+## What the three commands do
+
+<Steps>
+
+1. **`/plugin marketplace add elwizard33/qa-my-app`** registers this repo's `marketplace.json` with your Claude Code install. No plugins are installed yet — Claude Code just learns the catalog exists. ([docs](https://code.claude.com/docs/en/discover-plugins#add-marketplaces))
+
+2. **`/plugin install qa-catalog@qa-my-app`** installs the `qa-catalog` plugin from the `qa-my-app` marketplace at **user scope** by default. To install at project scope so teammates pick it up automatically, run `/plugin` instead and press Enter on **qa-catalog** in the Discover tab — you'll get scope options. ([docs](https://code.claude.com/docs/en/discover-plugins#install-plugins))
+
+3. **`/reload-plugins`** activates the new plugin without restarting Claude Code.
+
+</Steps>
+
+Verify it loaded by opening the plugin manager with `/plugin` and looking at the **Installed** tab — you should see **QA My App** with skills `init`, `scan`, `sync`, `run`, `run-all`. Errors (if any) show up under the **Errors** tab.
+
+<Aside type="note" title="Namespacing">
+Slash commands are exposed under the `qa-catalog:` namespace (the plugin's internal id) — e.g. `/qa-catalog:run-all`. The brand is QA My App; the namespace is a Claude Code plumbing detail.
+</Aside>
+
+## Local development / contributing
+
+If you've cloned the repo and want to test changes without publishing, launch Claude Code with the `--plugin-dir` flag instead:
+
+```bash
+claude --plugin-dir /path/to/qa-my-app
+```
+
+The local copy takes precedence over any installed marketplace version for that session. ([docs](https://code.claude.com/docs/en/plugins#test-your-plugins-locally))
+
+<Aside type="tip" title="Browser engine">
+The plugin is browser-engine agnostic. `.mcp.json` declares a plugin-scoped **Playwright** MCP for the main session, and the project-level browser agents declare their **own** inline `mcpServers` so every parallel spawn gets a dedicated browser process. Set `browser_engine` to `playwright` (default), `chrome-devtools`, or `stagehand`. See [Browser engines](/qa-my-app/browsers/).
+</Aside>

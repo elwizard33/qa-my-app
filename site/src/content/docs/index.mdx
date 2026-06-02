@@ -1,0 +1,56 @@
+---
+title: QA My App
+description: End-to-end QA testing as a Claude Code plugin — auto-discovers your stack, drives every page in a real browser, runs the whole platform in parallel, and files defects.
+template: splash
+hero:
+  tagline: End-to-end QA testing as a Claude Code plugin. Drop it into any web-app repo and Claude detects the framework, walks every page in a real browser, drives every form / modal / button / role gate, runs the whole platform in parallel, and reports back with screenshots, console logs, network traces, and filed defects. No test code to write.
+  image:
+    file: ../../assets/banner.png
+  actions:
+    - text: Install
+      link: /qa-my-app/start/install/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/elwizard33/qa-my-app
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## At a glance
+
+5 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · **zero test code to write**.
+
+<CardGrid stagger>
+  <Card title="Auto-discovers your stack" icon="magnifier">
+    Next.js, Remix, SvelteKit, Angular, Vue, Vite+React, Blazor, Flutter web, plain HTML — if it serves HTTP it's testable. Languages, package manager, build tool, UI libs, validators and existing test frameworks are detected too.
+  </Card>
+  <Card title="Drives a real browser" icon="laptop">
+    A dedicated browser MCP per agent, isolated contexts, every form field probed, every modal opened, every destructive button rehearsed. Playwright by default, with Chrome DevTools and Stagehand as drop-in alternatives.
+  </Card>
+  <Card title="Runs at platform scale" icon="rocket">
+    Parallel browser agents fan out across the whole app. A 30-route SPA full regression goes from ~40 minutes serial to ~7 minutes at `parallel_test_runners: 6`.
+  </Card>
+  <Card title="Files real defects" icon="error">
+    Hook up GitHub, Jira, or Azure DevOps via MCP and the runner files failures directly as issues / tickets / work items, with screenshots and reproduction steps attached.
+  </Card>
+  <Card title="Stays in sync with your code" icon="approve-check">
+    A Git pre-commit hook + Claude session hooks fingerprint every analysed source file and flag drift the moment a UI changes — so the next run tests what the UI actually does, not a stale plan.
+  </Card>
+  <Card title="Reviewable, replayable runs" icon="open-book">
+    Every run lands in `QA-tests/results/runs/<UTC-timestamp>/` with a schema-rigid `result.md` per task, embedded screenshots, an append-only history, and a self-contained auto-refreshing `report.html` dashboard.
+  </Card>
+</CardGrid>
+
+## Get started
+
+```text
+/plugin marketplace add elwizard33/qa-my-app
+/plugin install qa-catalog@qa-my-app
+/reload-plugins
+/qa-catalog:init
+```
+
+See [Install](/qa-my-app/start/install/) and [Quickstart](/qa-my-app/start/quickstart/) for the full walkthrough.

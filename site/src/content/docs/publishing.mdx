@@ -1,0 +1,50 @@
+---
+title: Publish to a marketplace
+description: Three ways to distribute the qa-catalog plugin — your own git marketplace, the Anthropic community marketplace, or the official one.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+This repo is already wired as a **self-marketplace** (`.claude-plugin/marketplace.json` points `source: "./"` at the plugin root), and both manifests pass `claude plugin validate --strict`. Pick a distribution channel below.
+
+<Aside type="tip" title="Validate first">
+Run `claude plugin validate .` (and `claude plugin validate ./.claude-plugin/plugin.json`) before sharing. The community review pipeline runs the same checks.
+</Aside>
+
+## Path A — Your own Git marketplace (works today)
+
+The repo is already set up for this. Anyone can install once the repo is reachable (public, or private for teammates who can clone it).
+
+```text
+/plugin marketplace add elwizard33/qa-my-app
+/plugin install qa-catalog@qa-my-app
+```
+
+(`qa-catalog` = plugin name, `qa-my-app` = marketplace name.)
+
+**Updates:** because `plugin.json` has a pinned `"version"`, users only receive updates when you **bump that field** and push. Until you bump, the installed version stays frozen — see [Version resolution](https://code.claude.com/docs/en/plugin-marketplaces#version-resolution).
+
+## Path B — Anthropic community marketplace (`@claude-community`)
+
+Public, third-party submissions land here after an automated safety + `claude plugin validate` review.
+
+1. Run `claude plugin validate .` locally first.
+2. Submit via one of the in-app forms:
+   - Claude.ai → [claude.ai/settings/plugins/submit](https://claude.ai/settings/plugins/submit)
+   - Console → [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit)
+3. On approval your plugin is pinned to a commit SHA in [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community), and CI auto-bumps the pin as you push. The public catalog syncs **nightly**, so expect a delay.
+
+Users then install with:
+
+```text
+/plugin marketplace add anthropics/claude-plugins-community
+/plugin install qa-catalog@claude-community
+```
+
+## Path C — `claude-plugins-official` (curated)
+
+No application process — Anthropic selects these at its discretion. The submission form does **not** add plugins to the official marketplace.
+
+## Recommendation
+
+Ship **Path A** now and submit to **Path B** for broader discovery. Both honor a no-surprise update policy: updates only flow when you bump `plugin.json`'s `version`.

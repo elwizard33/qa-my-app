@@ -1,0 +1,29 @@
+---
+title: Subagents
+description: The five subagents and where each runs.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+| Agent | Scope | Purpose | Tools |
+|---|---|---|---|
+| `qa-catalog:route-discoverer` | plugin | Static route discovery + rich metadata (auth, roles, guards, HTTP methods, dynamic params, layout chain, feature flags). | `Read, Grep, Glob, Bash` |
+| `qa-page-analyzer` | **project** | Browser-driving deep element inventory per route. Each spawn starts its own browser process — true isolation, no shared state between parallel runs. | inherits all except `Write`, `Edit`, `MultiEdit`, and destructive Bash patterns |
+| `qa-catalog:test-author` | plugin | Pure markdown — converts page analysis into task files using the enforced template. | `Read, Write, Edit, Glob` |
+| `qa-test-runner` | **project** | Browser-driving execution of one task → date-stamped `result.md` with embedded screenshots. Designed for parallel fan-out, one isolated browser per runner. | inherits all except destructive Bash patterns |
+| `qa-catalog:catalog-reconciler` | plugin | Plans add/update/delete for `catalog.json` from the drift report. | `Read, Grep, Glob` |
+
+<Aside type="note" title="Why two project-scope agents">
+The two browser-driving agents live at project scope because plugin-shipped subagents cannot declare inline `mcpServers` (silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). `/qa-catalog:init` Phase 0 copies them into `.claude/agents/` so every parallel spawn gets its own dedicated browser process. Commit them so the whole team shares the same browser-agent versions.
+</Aside>
+
+All agents are `model: inherit` — they use whatever model your session is on. No model is hardcoded.
+
+## Token efficiency (by design)
+
+Heavy work is isolated so it never floods the main conversation:
+
+- Each browser agent runs in its **own context window** and returns only a one-line JSON summary.
+- Verbose verification is offloaded to the `verify-result.mjs` / `catalog-diff.mjs` Node scripts — a hook, not the model, does the parsing.
+- The deterministic `qa-test-runner` uses `effort: medium` so extended-thinking tokens aren't spent re-deriving a pre-authored task — multiplied across every parallel runner. Reasoning-heavy analysis (`qa-page-analyzer`) keeps `effort: high`.
+- Slash skills use `disable-model-invocation: true`, so their descriptions stay out of context until you invoke them.

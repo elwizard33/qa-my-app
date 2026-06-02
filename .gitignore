@@ -9,6 +9,10 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Astro / Starlight docs site (site/) build cache + output
+.astro/
+site/.astro/
+
 # Plugin runtime artifacts (created when the plugin runs against a target project)
 QA-tests/
 .playwright-mcp/
