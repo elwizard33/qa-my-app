@@ -1,12 +1,13 @@
 ---
 title: Quickstart
-description: The five QA My App slash commands and the run dashboard.
+description: The six QA My App slash commands and the run dashboard.
 ---
 
-Once installed, drive everything from five slash commands:
+Once installed, drive everything from six slash commands:
 
 ```text
 /qa-catalog:init                 # First-time bootstrap; builds QA-tests/
+/qa-catalog:status               # Read-only health + inventory snapshot
 /qa-catalog:sync                 # After code changes, reconcile catalog
 /qa-catalog:scan                 # Force full rescan (backs up tasks first)
 /qa-catalog:run T03              # Execute one task end-to-end

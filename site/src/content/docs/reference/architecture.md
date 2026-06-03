@@ -23,6 +23,7 @@ flowchart TD
 |---|---|---|
 | Skill | `/qa-catalog:init` | First-time bootstrap orchestrator; runs in the main session, fans work to subagents in phases. |
 | Skill | `/qa-catalog:sync` | Incremental reconciler — only re-analyses routes whose source fingerprint changed. |
+| Skill | `/qa-catalog:status` | Read-only health + inventory snapshot: browser-agent install state, catalog framework/route/task counts, configured issue trackers, drift vs. source, and the last run's pass/fail/blocked totals. |
 | Skill | `/qa-catalog:scan` | Force full rescan (backs up `tasks/` first). |
 | Skill | `/qa-catalog:run` | Execute a single task end-to-end. |
 | Skill | `/qa-catalog:run-all` | Execute many tasks in parallel, supervisor loop with verification + retry. |
@@ -36,6 +37,7 @@ flowchart TD
 | Script | `fingerprint.mjs` | SHA-256 each cataloged source file → `.qa-catalog/fingerprints.json`. |
 | Script | `verify-result.mjs` | Schema gate on `result.md` before the runner's output enters the run. |
 | Script | `results-index.mjs` | Maintains `history.json`, `latest.json`, and per-task pointers. |
+| Script | `status.mjs` | Read-only inventory aggregator for `/qa-catalog:status`: browser-agent install state, route/task counts, integrations, last-run totals. Supports `--json`. |
 | Script | `render-report.mjs` | Renders the self-contained `report.html` dashboard from the live `task-queue.json`. |
 | Script | `install-precommit.sh` | Drops the Git pre-commit guard during `init`. |
 | Hook | `SessionStart (matcher: startup)` | Injects drift context into Claude's session via `hookSpecificOutput.additionalContext`. |

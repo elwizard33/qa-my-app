@@ -12,7 +12,7 @@
 
 > **End-to-end QA testing as a Claude Code plugin.** Drop it into any web-app repo and Claude detects the framework, walks every page in a real browser, drives every form / modal / button / role gate, runs the whole platform in parallel, and reports back with screenshots, console logs, network traces, and filed defects. No test code to write, no fixtures to wire — the plugin understands your app from the source.
 
-**At a glance:** 5 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
+**At a glance:** 6 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
 
 > 📖 **Full documentation:** [elwizard33.github.io/qa-my-app](https://elwizard33.github.io/qa-my-app/) — install guide, command reference, architecture, browser engines, and publishing.
 
@@ -152,6 +152,7 @@ The init skill is the orchestrator. It runs in your main Claude Code session and
 | **4. Task authoring** | `qa-catalog:test-author` (× `parallel_test_authors`) | Pure markdown. Converts each Page Analysis into one or more `QA-tests/tasks/T*.md` files using the enforced template (happy path + validation matrix + modal + button + edge cases). | tens of seconds |
 | **5. Catalog write** | main session | Writes `catalog.json` (with `stack` + `integrations` blocks), `catalog.md`, `routes/*.md`, `.qa-catalog/fingerprints.json`. | seconds |
 | **6. Pre-commit hook install** | `scripts/install-precommit.sh` | Drops a Git pre-commit hook that re-fingerprints staged source files and blocks the commit if the catalog is stale. | seconds |
+| **7. Summary receipt** | main session | Prints a **✓ checklist receipt** of everything created — framework + dev URL, routes discovered (protected / role-restricted), tasks authored, browser engine, catalog files, fingerprints recorded, issue trackers, and the pre-commit guard — then points you at `/qa-catalog:run-all` and `/qa-catalog:status`. | seconds |
 
 > ⚠️ **The first run takes longer.** Phase 3 opens every discovered route in a real browser, one batch at a time (`parallel_agents` wide). For a typical 30-route SPA, expect **5–20 minutes** on first run depending on dev-server warm-up, network latency, auth-wall handling, and how much validation probing each page needs. **Subsequent runs are incremental:** `/qa-catalog:sync` only re-analyses routes whose source fingerprint changed.
 

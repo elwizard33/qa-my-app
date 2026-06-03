@@ -31,6 +31,7 @@ flowchart TD
 |---|---|---|---|
 | Skill | `/qa-catalog:init` | [skills/init/SKILL.md](../skills/init/SKILL.md) | First-time bootstrap orchestrator; runs in the user's main session, fans work to subagents in phases. |
 | Skill | `/qa-catalog:sync` | [skills/sync/SKILL.md](../skills/sync/SKILL.md) | Incremental reconciler — only re-analyses routes whose source fingerprint changed. |
+| Skill | `/qa-catalog:status` | [skills/status/SKILL.md](../skills/status/SKILL.md) | Read-only health + inventory snapshot: browser-agent install state, catalog framework/route/task counts, configured issue trackers, drift vs. source, and the last run's pass/fail/blocked totals. |
 | Skill | `/qa-catalog:scan` | [skills/scan/SKILL.md](../skills/scan/SKILL.md) | Force full rescan (backs up `tasks/` first). |
 | Skill | `/qa-catalog:run` | [skills/run/SKILL.md](../skills/run/SKILL.md) | Execute a single task end-to-end. |
 | Skill | `/qa-catalog:run-all` | [skills/run-all/SKILL.md](../skills/run-all/SKILL.md) | Execute many tasks in parallel, supervisor loop with verification + retry. |
@@ -44,6 +45,7 @@ flowchart TD
 | Script | `fingerprint.mjs` | [scripts/fingerprint.mjs](../scripts/fingerprint.mjs) | SHA-256 each cataloged source file → `.qa-catalog/fingerprints.json`. |
 | Script | `verify-result.mjs` | [scripts/verify-result.mjs](../scripts/verify-result.mjs) | Schema gate on `result.md` before the runner's output enters the run. |
 | Script | `results-index.mjs` | [scripts/results-index.mjs](../scripts/results-index.mjs) | Maintains `history.json`, `latest.json`, and per-task `by-task/*/latest.json` pointers. |
+| Script | `status.mjs` | [scripts/status.mjs](../scripts/status.mjs) | Read-only inventory aggregator for `/qa-catalog:status`: browser-agent install state, route/task counts, integrations, last-run totals. Supports `--json`. |
 | Script | `render-report.mjs` | [scripts/render-report.mjs](../scripts/render-report.mjs) | Renders the self-contained `report.html` dashboard from the live `task-queue.json`. |
 | Script | `install-precommit.sh` | [scripts/install-precommit.sh](../scripts/install-precommit.sh) | Drops the Git pre-commit guard during `init`. |
 | Hook | `SessionStart (matcher: startup)` | [hooks/hooks.json](../hooks/hooks.json) | Injects drift context into Claude's session via `hookSpecificOutput.additionalContext`. |
