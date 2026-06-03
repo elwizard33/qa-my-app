@@ -239,11 +239,24 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-precommit.sh"
 This writes `.git/hooks/pre-commit` that re-fingerprints staged files and blocks the commit if `QA-tests/catalog.json` is stale, prompting the user to run `/qa-catalog:sync`.
 
 ### Phase 7 — Summary
-Print:
-- Framework + dev URL used
-- N routes discovered (M protected, K role-restricted)
-- T tasks authored across D depth level
-- Effective parallelism used
-- Path to `QA-tests/catalog.md`
+Print a **✓ checklist receipt** so the user can see exactly what was created, then the follow-up notes. Use the real numbers from this run (substitute the bracketed values):
+
+```
+  ✓ QA-tests/ initialized
+  ✓ 2 browser agents installed to .claude/agents/ (engine: <browser_engine>)
+  ✓ Framework detected: <framework> @ <dev URL>
+  ✓ <N> routes discovered (<M> protected, <K> role-restricted)
+  ✓ <T> tasks authored (depth: <task_depth>, max <max_tasks_per_route>/route)
+  ✓ Catalog written: QA-tests/catalog.md + catalog.json (v3)
+  ✓ <N> source fingerprints recorded
+  ✓ Issue trackers: <list selected, or "none">
+  ✓ Pre-commit drift guard: <installed | skipped>
+
+  You're ready. Run /qa-catalog:run-all to execute the suite,
+  or /qa-catalog:status any time to check catalog health.
+```
+
+Then add these notes below the receipt:
+- Effective parallelism used (page-analyzers / test-authors).
 - Reminder: run `/qa-catalog:sync` after code changes, or let the file-change hook nudge you.
-- Note: `.claude/agents/qa-page-analyzer.md` and `.claude/agents/qa-test-runner.md` were installed. Commit them so the whole team shares the same browser-agent versions.
+- Commit `.claude/agents/qa-page-analyzer.md` and `.claude/agents/qa-test-runner.md` so the whole team shares the same browser-agent versions.

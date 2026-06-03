@@ -123,6 +123,7 @@ The local copy takes precedence over any installed marketplace version for that 
 
 ```text
 /qa-catalog:init                 # First-time bootstrap; builds QA-tests/
+/qa-catalog:status               # Health + inventory snapshot (read-only)
 /qa-catalog:sync                 # After code changes, reconcile catalog
 /qa-catalog:scan                 # Force full rescan (backs up tasks first)
 /qa-catalog:run T03              # Execute one task end-to-end

@@ -1,11 +1,12 @@
 ---
 title: Commands
-description: The five /qa-catalog slash commands.
+description: The /qa-catalog slash commands.
 ---
 
 | Command | What it does |
 |---|---|
-| `/qa-catalog:init` | First-time bootstrap. Detects the framework, discovers routes, analyzes every page in a browser, authors tasks, writes the catalog, and installs the pre-commit guard. |
+| `/qa-catalog:init` | First-time bootstrap. Detects the framework, discovers routes, analyzes every page in a browser, authors tasks, writes the catalog, and installs the pre-commit guard. Ends with a ✓ checklist receipt. |
+| `/qa-catalog:status` | Read-only health + inventory snapshot: browser-agent install state, catalog framework/route/task counts, configured issue trackers, drift vs. source, and the last run's pass/fail/blocked totals. |
 | `/qa-catalog:sync` | Incremental reconciler — only re-analyses routes whose source fingerprint changed since the last run. |
 | `/qa-catalog:scan` | Force a full rescan (backs up `tasks/` first). |
 | `/qa-catalog:run <id>` | Execute a single task end-to-end → `result.md` + screenshots. |
