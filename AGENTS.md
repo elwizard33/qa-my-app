@@ -19,7 +19,7 @@
 | `agents/catalog-reconciler.md` | Drift planner for `/qa-catalog:sync`. | plugin subagent |
 | `agents/qa-page-analyzer.md` | Browser-driving element inventory. Each spawn starts its own `npx @playwright/mcp@latest` process. | **project** (copied to `.claude/agents/` by `/qa-catalog:init` Phase 0) |
 | `agents/qa-test-runner.md` | Browser-driving task execution → `result.md` + screenshots. | **project** (same as above) |
-| `skills/{init,scan,sync,run,run-all,status}/SKILL.md` | Slash commands `/qa-catalog:*`. | plugin skill |
+| `skills/{init,scan,sync,run,run-all,status,verify}/SKILL.md` | Slash commands `/qa-catalog:*`. `verify` is the change/ticket-scoped inner loop. | plugin skill |
 | `hooks/hooks.json` | `SessionStart` (matcher: `startup`) catalog diff + async `PostToolUse` matcher on `Write\|Edit\|MultiEdit`. | plugin hook |
 | `scripts/*.mjs`, `scripts/*.sh` | Pure-stdlib Node helpers + Bash precommit installer. Invoked via `node ${CLAUDE_PLUGIN_ROOT}/scripts/...`. | plugin scripts |
 | `.mcp.json` | Bundled Playwright MCP (stdio). Available in the main session and to plugin subagents. | plugin MCP |

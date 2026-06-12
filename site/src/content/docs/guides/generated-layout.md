@@ -43,12 +43,13 @@ QA-tests/
 Every task file is identical in shape:
 
 - Preconditions + required role
-- Test data with concrete values
-- `### TC-01` Happy path with numbered steps + assertions
+- Test data with a concrete value for every field the happy path fills
+- `### TC-01` Happy path — fill **every** field with valid data, **submit for real**, assert the concrete result (toast / new row / redirect), optionally reload to confirm persistence
 - `### TC-02` Form validation matrix (one row per field × empty / pattern / max-length)
-- `### TC-03` Modal coverage (cancel + confirm paths)
+- `### TC-03` Modal coverage (submit valid + invalid inside the modal, plus the cancel path)
 - `### TC-04` Button coverage (including destructive confirm + cancel)
 - `### TC-05` Edge & negative cases
+- `## Acceptance criteria` (only when authored from a ticket — maps each criterion to the TCs that prove it)
 - Console + network expectations
 
 ## Result file schema
@@ -83,6 +84,12 @@ Every `result.md` is identical in shape and is validated by `scripts/verify-resu
 | Field | Case | Expected | Actual | Result |
 |---|---|---|---|---|
 | email | pattern | "Invalid email" | "Invalid email" | ✓ |
+
+## Acceptance criteria
+<!-- present only when the task was authored from a ticket (e.g. via /qa-catalog:verify PROJ-123) -->
+| # | Acceptance criterion | Verified by | Result |
+|---|---|---|---|
+| AC-1 | Editing a customer's email shows a "Saved" toast | TC-01 | ✓ |
 
 ## Screenshots
 ### TC-01

@@ -27,6 +27,7 @@ flowchart TD
 | Skill | `/qa-catalog:scan` | Force full rescan (backs up `tasks/` first). |
 | Skill | `/qa-catalog:run` | Execute a single task end-to-end. |
 | Skill | `/qa-catalog:run-all` | Execute many tasks in parallel, supervisor loop with verification + retry. |
+| Skill | `/qa-catalog:verify` | Change/ticket-scoped inner loop: resolves scope from the conversation + uncommitted diff (default), a branch/PR range, a route, or a connected tracker's acceptance criteria; re-authors the affected tasks and runs them, reporting pass/fail per criterion. |
 | Subagent (plugin) | `qa-catalog:route-discoverer` | Walks the source tree, returns rich JSON per route. |
 | Subagent (plugin) | `qa-catalog:test-author` | Converts each Page Analysis JSON into one or more `T*.md` task files. |
 | Subagent (plugin) | `qa-catalog:catalog-reconciler` | Pure planner — turns a drift report into an add/update/delete plan. |
@@ -34,6 +35,7 @@ flowchart TD
 | Subagent (**project**) | `qa-test-runner` | Executes one task end-to-end → `result.md` + screenshots. Same project-scope reasoning as the analyzer. |
 | Script | `detect-framework.mjs` | Detects framework, languages, package manager, build tool, UI libs, validators, etc. |
 | Script | `catalog-diff.mjs` | Drift detector. Modes: `--json`, `--silent`, `--notify`, `--precommit`, `--session-start`, `--post-tool`. |
+| Script | `change-scope.mjs` | Maps changed source files (working tree default; `--staged`, `--branch [base]`, `--files`) onto `catalog.routes[].sourceFile`/`layoutChain` → the routes + tasks `/qa-catalog:verify` should re-author and run. |
 | Script | `fingerprint.mjs` | SHA-256 each cataloged source file → `.qa-catalog/fingerprints.json`. |
 | Script | `verify-result.mjs` | Schema gate on `result.md` before the runner's output enters the run. |
 | Script | `results-index.mjs` | Maintains `history.json`, `latest.json`, and per-task pointers. |

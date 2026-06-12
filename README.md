@@ -139,7 +139,7 @@ The local copy takes precedence over any installed marketplace version for that 
 /qa-catalog:verify /customers    # Verify one route right now
 ```
 
-Every `/qa-catalog:run` or `/qa-catalog:run-all` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, the auto-refresh disables itself and the same file becomes the canonical browse view for that run.
+Every `/qa-catalog:run`, `/qa-catalog:run-all`, or `/qa-catalog:verify` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, the auto-refresh disables itself and the same file becomes the canonical browse view for that run.
 
 ---
 

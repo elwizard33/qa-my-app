@@ -7,6 +7,7 @@ All notable changes to this plugin are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **`/qa-catalog:status` — read-only health + inventory snapshot.** Reports browser-agent install state, catalog framework/route/task counts, configured issue trackers, drift vs. source, per-role credential resolution, and the last run's pass/fail/blocked totals. Backed by `scripts/status.mjs` (supports `--json`). Brings the skill count to seven.
 - **`/qa-catalog:verify` — change/ticket-scoped inner loop.** Resolves what to test from this conversation + the uncommitted git diff (default), a `--branch [base]` PR range, `--staged`, an explicit route/path, or a connected issue tracker's **acceptance criteria** (`/qa-catalog:verify PROJ-123`). Re-authors only the affected tasks, runs them, and reports pass/fail **per acceptance criterion**. The fast counterpart to the full-suite `/qa-catalog:run-all`.
 - `scripts/change-scope.mjs` — maps changed source files onto `catalog.routes[].sourceFile`/`layoutChain` to find the affected routes + tasks. Pure Node + git; modes `--staged`, `--branch [base]`, `--files`.
 - `test-author` accepts `settings.acceptanceCriteria` (emits an `## Acceptance criteria` block mapping each criterion to its TCs) and `settings.changedSummary` (biases happy-path/edge cases toward what changed), and now reads the route source directly for exact validation rules.

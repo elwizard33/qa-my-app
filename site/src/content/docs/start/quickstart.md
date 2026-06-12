@@ -1,9 +1,9 @@
 ---
 title: Quickstart
-description: The six QA My App slash commands and the run dashboard.
+description: The seven QA My App slash commands and the run dashboard.
 ---
 
-Once installed, drive everything from six slash commands:
+Once installed, drive everything from seven slash commands:
 
 ```text
 /qa-catalog:init                 # First-time bootstrap; builds QA-tests/
@@ -16,11 +16,14 @@ Once installed, drive everything from six slash commands:
 /qa-catalog:run-all /customers   # Subset by route prefix
 /qa-catalog:run-all failed       # Re-run only tasks whose last result was FAIL/BLOCKED
 /qa-catalog:run-all changed      # Re-run only tasks whose route source is dirty
+/qa-catalog:verify               # Test just what changed (conversation + uncommitted diff)
+/qa-catalog:verify PROJ-123      # Verify against a ticket's acceptance criteria
+/qa-catalog:verify --branch      # Verify the whole PR (everything different from main)
 ```
 
 ## The live run dashboard
 
-Every `/qa-catalog:run` or `/qa-catalog:run-all` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, auto-refresh disables itself and the same file becomes the canonical browse view for that run.
+Every `/qa-catalog:run`, `/qa-catalog:run-all`, or `/qa-catalog:verify` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, auto-refresh disables itself and the same file becomes the canonical browse view for that run.
 
 No server, no install, no dependencies — double-click to open.
 

@@ -6,12 +6,14 @@ description: How QA My App separates understanding the app from running the test
 Most "AI testing" tools re-derive *what to test* on every run — slow, non-deterministic, impossible to review. QA My App separates **understanding the app** from **running the tests** by persisting an in-repo **task catalog** under `QA-tests/`:
 
 1. **Discover once, test forever.** The catalog is a versioned source of truth for what every page is supposed to do — every form field, every validator, every modal, every destructive button, every role gate. It lives in your repo so reviewers can read it like documentation.
-2. **Standardised surface.** Every route has the same canonical task shapes — happy path, validation matrix, modal coverage, button coverage, edge cases. The runner parses and executes them deterministically.
+2. **Standardised surface.** Every route has the same canonical task shapes — happy path, validation matrix, modal coverage, button coverage, edge cases. The runner parses and executes them deterministically, **filling and submitting every form and dialog for real** and asserting the observable result (success toast, new row, error banner) — only destructive actions stay gated.
 3. **Drift-aware.** Fingerprints + hooks flag the moment a UI changes so the catalog is rebuilt only where needed.
 4. **Parallel by construction.** Because tasks are uniform, the orchestrator can fan them out across N browser agents without coordination overhead.
 5. **Diffable history.** Same input → same plan → same outputs → diff across commits.
 
 The catalog is the engine room. You don't have to look at it — but it's why subsequent runs are fast, deterministic, and PR-reviewable.
+
+**Inner loop vs. full suite.** `/qa-catalog:run-all` executes the whole catalog; `/qa-catalog:verify` is the change-scoped counterpart — it resolves what changed (this conversation + the uncommitted diff, a branch/PR range, or a connected ticket's acceptance criteria), re-authors only the affected tasks, and runs them, reporting pass/fail per acceptance criterion.
 
 ## Catalog model
 

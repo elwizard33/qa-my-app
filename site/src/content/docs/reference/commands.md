@@ -11,6 +11,7 @@ description: The /qa-catalog slash commands.
 | `/qa-catalog:scan` | Force a full rescan (backs up `tasks/` first). |
 | `/qa-catalog:run <id>` | Execute a single task end-to-end → `result.md` + screenshots. |
 | `/qa-catalog:run-all [filter]` | Execute many tasks in parallel, with verification + retry. |
+| `/qa-catalog:verify [scope]` | Test only what changed (or what a ticket asks for). Re-authors the affected tasks and runs them, reporting pass/fail **per acceptance criterion**. The fast inner-loop counterpart to `run-all`. |
 
 ## `/qa-catalog:run-all` filters
 
@@ -22,7 +23,21 @@ description: The /qa-catalog slash commands.
 /qa-catalog:run-all changed      # only tasks whose route source is dirty
 ```
 
-Each invocation writes a self-contained, auto-refreshing dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser to watch the queue drain live.
+## `/qa-catalog:verify` scope
+
+```text
+/qa-catalog:verify               # default: this conversation + the uncommitted git diff
+/qa-catalog:verify PROJ-123      # a connected tracker's ticket — pulls its acceptance criteria
+/qa-catalog:verify --branch      # everything different from main (verify the whole PR)
+/qa-catalog:verify --branch dev  # everything different from <base>
+/qa-catalog:verify --staged      # only staged changes
+/qa-catalog:verify /customers    # one route
+/qa-catalog:verify app/foo.tsx   # the route(s) a file backs
+```
+
+`verify` maps changed source files onto the catalog (`scripts/change-scope.mjs`), re-authors only the affected tasks so they reflect the current page, then runs them. When a ticket is given and a Jira / GitHub / Azure DevOps MCP is connected, its acceptance criteria become checked assertions and the report says how many were verified.
+
+Each `run`, `run-all`, and `verify` invocation writes a self-contained, auto-refreshing dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser to watch the queue drain live.
 
 ## Why the supervisor lives in the skill layer
 

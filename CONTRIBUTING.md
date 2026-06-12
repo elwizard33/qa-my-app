@@ -32,7 +32,7 @@ agents/              # 3 plugin-shipped subagents + 2 project-scope templates
                      #  plugin-namespaced; qa-page-analyzer + qa-test-runner are
                      #  copied to .claude/agents/ by /qa-catalog:init Phase 0
                      #  so they can declare inline mcpServers)
-skills/              # 5 slash-command skills (init, scan, sync, run, run-all)
+skills/              # 7 slash-command skills (init, scan, sync, status, run, run-all, verify)
 hooks/hooks.json     # SessionStart + PostToolUse
 scripts/             # Pure-stdlib Node helpers + the precommit installer
 .mcp.json            # Bundled Playwright MCP (stdio)
