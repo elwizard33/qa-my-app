@@ -9,6 +9,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Local Claude Code config (machine-specific paths / personal permission allowlist)
+.claude/
+
 # Astro / Starlight docs site (site/) build cache + output
 .astro/
 site/.astro/
