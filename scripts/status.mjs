@@ -58,6 +58,49 @@ if (catalog) {
   };
 }
 
+// Per-role credential health (redacted — never reads or prints secret values).
+// We re-check ${ENV_VAR} references live so the report reflects the current shell.
+const authFilePath = join(cwd, "QA-tests", ".qa-catalog", "auth.local.json");
+const authFile = readJson(authFilePath);
+let credentials = null;
+if (authFile && authFile.roles && typeof authFile.roles === "object") {
+  const envMissing = (val) => {
+    if (typeof val !== "string") return [];
+    const out = [];
+    val.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_m, name) => {
+      if (!process.env[name]) out.push(name);
+      return "";
+    });
+    return out;
+  };
+  const roles = {};
+  for (const [name, def] of Object.entries(authFile.roles)) {
+    const mode = (def && def.authMode) || "none";
+    let resolved = true;
+    const missing = [];
+    if (mode === "shared-credentials") {
+      for (const f of ["username", "password"]) {
+        for (const m of envMissing(def?.[f])) missing.push(m);
+        if (!def?.[f]) resolved = false;
+      }
+    } else if (mode === "storage-state") {
+      const p = def?.storageStatePath || "";
+      if (!p) resolved = false;
+      else if (!existsSync(join(cwd, "QA-tests", p))) missing.push(`storageState:${p}`);
+    }
+    if (missing.length) resolved = false;
+    roles[name] = { authMode: mode, resolved, missing: [...new Set(missing)] };
+  }
+  credentials = {
+    present: true,
+    source: "QA-tests/.qa-catalog/auth.local.json",
+    defaultRole: authFile.defaultRole || "anonymous",
+    rolesConfigured: Object.keys(roles),
+    rolesResolved: Object.keys(roles).filter((n) => roles[n].resolved),
+    roles,
+  };
+}
+
 const historyPath = join(cwd, "QA-tests", "results", "history.json");
 const history = readJson(historyPath);
 let lastRun = null;
@@ -74,6 +117,7 @@ const status = {
   project: cwd,
   agents,
   catalog: catalogInfo,
+  credentials,
   lastRun,
 };
 
@@ -115,6 +159,17 @@ if (Object.keys(integrations).length > 0) {
   for (const [name, cfg] of Object.entries(integrations)) {
     const enabled = !!cfg?.enabled;
     out.push(`  ${enabled ? "✓" : "-"} ${name}${enabled ? ` (${cfg.mcpServer ?? "connected"})` : " (disabled)"}`);
+  }
+  out.push("");
+}
+
+if (credentials) {
+  out.push("  Per-role credentials (QA-tests/.qa-catalog/auth.local.json):");
+  for (const [name, r] of Object.entries(credentials.roles)) {
+    const detail = r.resolved
+      ? r.authMode
+      : `${r.authMode} — missing ${r.missing.join(", ") || "credentials"}`;
+    out.push(`  ${tick(r.resolved)} ${name}: ${detail}`);
   }
   out.push("");
 }

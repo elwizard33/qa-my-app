@@ -27,6 +27,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bas
 | Auth mode | `${user_config.auth_mode}` |
 | Default role | `${user_config.default_role}` |
 | Available roles | `${user_config.available_roles}` |
+| Credential map | `${user_config.auth_credentials_file}` |
 | Task depth | `${user_config.task_depth}` |
 | Max tasks per route | `${user_config.max_tasks_per_route}` |
 | Excluded globs | `${user_config.exclude_globs}` |
@@ -78,6 +79,39 @@ If either file already exists (e.g. the user has customised it), leave it unchan
 See [docs/browsers/](../../docs/browsers/README.md) for per-engine setup and caveats (Stagehand has limited screenshot/console/network capture).
 
 > Project-scope (not plugin-scope) because only `.claude/agents/` agents may declare inline `mcpServers` — that's what gives each parallel spawn its own isolated browser process. Rationale: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md).
+
+---
+
+### Phase 0.5 — Scaffold the per-role credential map
+
+When `${user_config.auth_mode}` is `per-role` (or `${user_config.available_roles}` lists more than one role), bootstrap the gitignored credential map so the user has a place to put a different login per role.
+
+1. Create the folder: `mkdir -p QA-tests/.qa-catalog/state`.
+2. **Only if** `QA-tests/.qa-catalog/auth.local.json` does not already exist, write a template built from `${user_config.available_roles}` (plus `${user_config.default_role}` and `anonymous`). Every protected role gets a `shared-credentials` stub whose password is an `${ENV_VAR}` reference — **never** a literal secret:
+   ```json
+   {
+     "version": 1,
+     "defaultRole": "${user_config.default_role}",
+     "roles": {
+       "anonymous": { "authMode": "none" },
+       "admin": { "authMode": "shared-credentials", "loginUrl": "/login", "username": "admin@example.test", "password": "${QA_CRED_ADMIN_PASSWORD}" },
+       "user":  { "authMode": "shared-credentials", "loginUrl": "/login", "username": "user@example.test",  "password": "${QA_CRED_USER_PASSWORD}" }
+     }
+   }
+   ```
+   Name one env var per role (`QA_CRED_<ROLE>_PASSWORD`). Leave it for the user to fill — do not invent passwords.
+3. **Gitignore the secrets.** Ensure the target project's root `.gitignore` contains both lines (append only if missing):
+   ```
+   QA-tests/.qa-catalog/auth.local.json
+   QA-tests/.qa-catalog/state/
+   ```
+4. Validate + report status (redacted — never prints passwords):
+   ```bash
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --status
+   ```
+   Tell the user which roles are unresolved (e.g. "set `QA_CRED_ADMIN_PASSWORD` in your shell or CI before running protected tasks").
+
+If `auth_mode` is `none`, `shared-credentials`, or `storage-state`, skip this phase — the single-credential path still works unchanged.
 
 ---
 
@@ -146,6 +180,11 @@ It returns a rich JSON array (path, sourceFile, requiresAuth, rolesAllowed, guar
 ### Phase 3 — Analyze pages (parallel, isolated browser processes)
 Run **`qa-page-analyzer`** subagents in concurrent batches of `${user_config.parallel_agents}`. Each spawn starts its own Playwright process — no shared state, no coordination needed.
 
+When `auth_mode` is `per-role`, first resolve the credential map once (passwords interpolated from env vars) and reuse it for every analyzer:
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --json
+```
+
 Per-agent input:
 ```json
 {
@@ -156,7 +195,9 @@ Per-agent input:
     "headless": ${user_config.browser_headless},
     "settleMs": ${user_config.settle_ms},
     "authMode": "${user_config.auth_mode}",
+    "defaultRole": "${user_config.default_role}",
     "credentials": { "username": "${user_config.auth_username}", "password": "${user_config.auth_password}" },
+    "credentialsByRole": { ...roles object from auth-resolve.mjs, or omit if not per-role... },
     "storageStatePath": "${user_config.auth_storage_state_path}"
   }
 }
@@ -212,6 +253,13 @@ After all tasks are authored, write:
        "azureDevOps":{ "enabled": false, "mcpServer": null        }
      },
      "settingsSnapshot": { "...": "resolved settings" },
+     "auth": {
+       "mode": "per-role",
+       "defaultRole": "anonymous",
+       "credentialSource": "QA-tests/.qa-catalog/auth.local.json",
+       "rolesUsed": ["admin", "manager", "user"],
+       "rolesConfigured": ["admin", "user"]
+     },
      "routes": [
        {
          "path": "/customers",
@@ -226,7 +274,7 @@ After all tasks are authored, write:
      ]
    }
    ```
-   The `stack` block is sourced verbatim from `detect-framework.mjs` output. The `integrations` block records the Phase 0 selection so the test-runner can later file defects against the chosen tracker via its MCP.
+   The `stack` block is sourced verbatim from `detect-framework.mjs` output. The `integrations` block records the Phase 0 selection so the test-runner can later file defects against the chosen tracker via its MCP. The `auth` block holds **no secrets** — `rolesUsed` is the distinct set of `rolesAllowed` across all routes (plus `defaultRole`), and `rolesConfigured` is the `rolesResolved` list from `node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --status --json`. It lets `/qa-catalog:status` report which roles still need credentials.
 2. `QA-tests/catalog.md` — human-readable table grouped by route, with columns: Path • Auth • Roles • Tasks.
 3. `QA-tests/routes/<slug>.md` — one file per route containing the raw Page Analysis (element inventory).
 4. `QA-tests/.qa-catalog/fingerprints.json` — `{ "<sourceFile>": "<sha256>" }` for every analyzed source file. Compute SHAs with: `node "${CLAUDE_PLUGIN_ROOT}/scripts/fingerprint.mjs" <files...>`.
@@ -247,6 +295,7 @@ Print a **✓ checklist receipt** so the user can see exactly what was created, 
   ✓ Framework detected: <framework> @ <dev URL>
   ✓ <N> routes discovered (<M> protected, <K> role-restricted)
   ✓ <T> tasks authored (depth: <task_depth>, max <max_tasks_per_route>/route)
+  ✓ Per-role credentials: <X/Y roles resolved | "single shared credential" | "none">
   ✓ Catalog written: QA-tests/catalog.md + catalog.json (v3)
   ✓ <N> source fingerprints recorded
   ✓ Issue trackers: <list selected, or "none">

@@ -42,6 +42,17 @@ For each candidate route, statically inspect the source file and any layout chai
 - **requiresAuth** — `true` if you can grep an auth wrapper (`withAuth`, `requireAuth`, `getServerSession`, `authGuard`, `[Authorize]`, `<RequireAuth>`, middleware redirect to `/login`, etc.). Else `null`.
 - **rolesAllowed** — array of role names cross-referenced against `settings.availableRoles`. Sources: `roles={[...]}` props, `[Authorize(Roles="...")]`, `data: { roles: [...] }`, `meta.roles`, RBAC guard literals. `[]` means "any authenticated user". `null` means "could not infer".
 - **guards** — list of middleware/decorator/HOC names you spotted (`withAuth`, `canActivate`, `loader`, `middleware.ts` chain).
+
+### Tracing roles into the backend (do this before giving up on `rolesAllowed`)
+
+The route file rarely names the role directly — the guard does. When `requiresAuth` is true but `rolesAllowed` is still `null`, **follow the guard one or two import hops** and read what it actually checks. This is still pure static reading (Grep + Read), never execution:
+
+1. Identify the guard symbol on the route: the HOC (`withAuth`, `<RequireAuth roles=…>`), the route-config key (`canActivate`, `meta.roles`, `data.roles`, `loader`), the decorator (`[Authorize(Roles=…)]`, `@Roles('admin')`), or the middleware file (`middleware.ts`, `+page.server.ts`, `+layout.server.ts`).
+2. Grep for that symbol's **definition** (e.g. `grep -rn "export function withAuth" src`, `function requireRole`, `canActivate(` class body, the `middleware.ts` matcher config).
+3. Read the definition and extract any role literals it enforces: `requireRole('admin')`, `session.role !== 'admin'`, `hasRole(user, ['admin','manager'])`, `roles.includes(...)`, an RBAC table import (`lib/rbac.ts`, `permissions.ts`, `acl.*`), a path-pattern → role map in middleware, or `[Authorize(Roles="Admin,Manager")]` on the server controller backing the route's data fetch.
+4. Cross-reference any literals found against `settings.availableRoles` and record them in `rolesAllowed`. If the guard enforces "any authenticated user" with no role literal, set `[]`. If you traced two hops and still found no literal, leave `null` and add the guard name to `guards` so a human knows where to look.
+
+Bound the search to **two import hops** — do not recurse the whole app. Record the guard→role mapping you discover in project memory (see below) so future runs resolve it instantly.
 - **httpMethods** — for routes that also export server handlers (Next.js Route Handlers, SvelteKit `+server.ts`, Remix `action`/`loader`), list the HTTP verbs.
 - **dynamicParams** — for `[id]`, `:id`, `{id}` style segments, list `{ name, kind: "string|number|catch-all" }`.
 - **layoutChain** — array of layout source files that wrap this page (Next.js `layout.tsx`, Remix parent routes, SvelteKit `+layout.svelte`).

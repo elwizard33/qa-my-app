@@ -94,7 +94,7 @@ That's it — the plugin is installed at **user scope** (available in every repo
 2. `/plugin install qa-catalog@qa-my-app` installs the `qa-catalog` plugin from the `qa-my-app` marketplace at **user scope** by default. To install at project scope so teammates pick it up automatically, run `/plugin` instead and press Enter on **qa-catalog** in the Discover tab — you'll get scope options. ([docs](https://code.claude.com/docs/en/discover-plugins#install-plugins))
 3. `/reload-plugins` activates the new plugin without restarting Claude Code.
 
-Verify it loaded by opening the plugin manager with `/plugin` and looking at the **Installed** tab — you should see **QA My App** with skills `init`, `scan`, `sync`, `run`, `run-all`. Errors (if any) show up under the **Errors** tab.
+Verify it loaded by opening the plugin manager with `/plugin` and looking at the **Installed** tab — you should see **QA My App** with skills `init`, `scan`, `sync`, `status`, `run`, `run-all`, `verify`. Errors (if any) show up under the **Errors** tab.
 
 </details>
 
@@ -132,6 +132,11 @@ The local copy takes precedence over any installed marketplace version for that 
 /qa-catalog:run-all /customers   # Subset by route prefix
 /qa-catalog:run-all failed       # Re-run only tasks whose last result was FAIL/BLOCKED
 /qa-catalog:run-all changed      # Re-run only tasks whose route source is dirty
+
+/qa-catalog:verify               # Test just what changed (this conversation + uncommitted diff)
+/qa-catalog:verify PROJ-123      # Test against a Jira/issue ticket's acceptance criteria
+/qa-catalog:verify --branch      # Verify the whole PR (everything different from main)
+/qa-catalog:verify /customers    # Verify one route right now
 ```
 
 Every `/qa-catalog:run` or `/qa-catalog:run-all` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, the auto-refresh disables itself and the same file becomes the canonical browse view for that run.
@@ -364,10 +369,11 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `browser_channel` | `chromium` | For `playwright` / `chrome-devtools`: `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. Ignored by `stagehand`. |
 | `browser_headless` | `true` | Set false to watch agents work. Ignored by `stagehand` (cloud is always headless). |
 | `settle_ms` | `5000` | Wait after navigation before snapshot (0–60000). |
-| `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state`. |
-| `auth_username` | _empty_ | Used when `auth_mode = shared-credentials`. |
-| `auth_password` | _empty (sensitive)_ | Env-only. |
+| `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state` / `per-role`. |
+| `auth_username` | _empty_ | Single shared username, used when `auth_mode = shared-credentials`. |
+| `auth_password` | _empty (sensitive)_ | Single shared password. Env-only / OS keychain. |
 | `auth_storage_state_path` | _empty_ | Playwright storage-state JSON file. |
+| `auth_credentials_file` | _empty_ | Per-role credential map for `auth_mode = per-role` (default `QA-tests/.qa-catalog/auth.local.json`). Gitignored; passwords referenced via `${ENV_VAR}`. |
 | `default_role` | `anonymous` | Assumed role when guards don't restrict. |
 | `available_roles` | _empty_ | Multi-value list (`multiple: true`) of roles the app supports — cross-referenced against route guards. |
 | `task_depth` | `deep` | `deep` / `standard` / `smoke`. |

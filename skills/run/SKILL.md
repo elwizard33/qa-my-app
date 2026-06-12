@@ -42,6 +42,13 @@ Locate the task file matching `$ARGUMENTS`. If none found, list available task i
    ```
 
 ### Phase 2 — Dispatch the runner
+
+**Resolve per-role credentials first.** When `auth_mode` is `per-role`, load the credential map (secrets interpolated from env vars):
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --json
+```
+Use the returned `roles` object as `credentialsByRole`. If the file is absent (`present: false`) or `auth_mode` is not `per-role`, omit `credentialsByRole` and let the runner fall back to the single shared credential below. Never print resolved passwords back to the user.
+
 Spawn the project-level agent **`qa-test-runner`** with this payload:
 
 ```json
@@ -56,7 +63,9 @@ Spawn the project-level agent **`qa-test-runner`** with this payload:
     "headless":       ${user_config.browser_headless},
     "settleMs":       ${user_config.settle_ms},
     "authMode":       "${user_config.auth_mode}",
+    "defaultRole":    "${user_config.default_role}",
     "credentials":    { "username": "${user_config.auth_username}", "password": "${user_config.auth_password}" },
+    "credentialsByRole": { ...roles object from auth-resolve.mjs, or omit if not per-role... },
     "storageStatePath": "${user_config.auth_storage_state_path}"
   }
 }

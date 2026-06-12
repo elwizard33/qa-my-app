@@ -35,6 +35,7 @@ flowchart TD
 | Skill | `/qa-catalog:scan` | [skills/scan/SKILL.md](../skills/scan/SKILL.md) | Force full rescan (backs up `tasks/` first). |
 | Skill | `/qa-catalog:run` | [skills/run/SKILL.md](../skills/run/SKILL.md) | Execute a single task end-to-end. |
 | Skill | `/qa-catalog:run-all` | [skills/run-all/SKILL.md](../skills/run-all/SKILL.md) | Execute many tasks in parallel, supervisor loop with verification + retry. |
+| Skill | `/qa-catalog:verify` | [skills/verify/SKILL.md](../skills/verify/SKILL.md) | Change/ticket-scoped inner loop: resolves scope from the conversation + uncommitted diff (default), a branch/PR range, a route, or a connected tracker's acceptance criteria; re-authors the affected tasks and runs them, reporting pass/fail per acceptance criterion. |
 | Subagent (plugin) | `qa-catalog:route-discoverer` | [agents/route-discoverer.md](../agents/route-discoverer.md) | Walks the source tree, returns rich JSON per route. |
 | Subagent (plugin) | `qa-catalog:test-author` | [agents/test-author.md](../agents/test-author.md) | Converts each Page Analysis JSON into one or more `T*.md` task files. |
 | Subagent (plugin) | `qa-catalog:catalog-reconciler` | [agents/catalog-reconciler.md](../agents/catalog-reconciler.md) | Pure planner — turns a drift report into an add/update/delete plan. |
@@ -42,10 +43,12 @@ flowchart TD
 | Subagent (**project**) | `qa-test-runner` | [agents/qa-test-runner.md](../agents/qa-test-runner.md) | Executes one task end-to-end → `result.md` + screenshots. Same project-scope reasoning as the analyzer. |
 | Script | `detect-framework.mjs` | [scripts/detect-framework.mjs](../scripts/detect-framework.mjs) | Detects framework, languages, package manager, build tool, UI libs, validators, etc. |
 | Script | `catalog-diff.mjs` | [scripts/catalog-diff.mjs](../scripts/catalog-diff.mjs) | Drift detector. Modes: `--json`, `--silent`, `--notify`, `--precommit`, `--session-start`, `--post-tool`. |
+| Script | `change-scope.mjs` | [scripts/change-scope.mjs](../scripts/change-scope.mjs) | Maps changed source files (working tree default; `--staged`, `--branch [base]`, `--files`) onto `catalog.routes[].sourceFile`/`layoutChain` → the routes + tasks `/qa-catalog:verify` should re-author and run. |
 | Script | `fingerprint.mjs` | [scripts/fingerprint.mjs](../scripts/fingerprint.mjs) | SHA-256 each cataloged source file → `.qa-catalog/fingerprints.json`. |
 | Script | `verify-result.mjs` | [scripts/verify-result.mjs](../scripts/verify-result.mjs) | Schema gate on `result.md` before the runner's output enters the run. |
 | Script | `results-index.mjs` | [scripts/results-index.mjs](../scripts/results-index.mjs) | Maintains `history.json`, `latest.json`, and per-task `by-task/*/latest.json` pointers. |
 | Script | `status.mjs` | [scripts/status.mjs](../scripts/status.mjs) | Read-only inventory aggregator for `/qa-catalog:status`: browser-agent install state, route/task counts, integrations, last-run totals. Supports `--json`. |
+| Script | `auth-resolve.mjs` | [scripts/auth-resolve.mjs](../scripts/auth-resolve.mjs) | Read-only per-role credential resolver. Reads the gitignored `QA-tests/.qa-catalog/auth.local.json`, interpolates `${ENV_VAR}` passwords, and returns the `credentialsByRole` map (or a redacted status via `--status`). Never writes secrets. |
 | Script | `render-report.mjs` | [scripts/render-report.mjs](../scripts/render-report.mjs) | Renders the self-contained `report.html` dashboard from the live `task-queue.json`. |
 | Script | `install-precommit.sh` | [scripts/install-precommit.sh](../scripts/install-precommit.sh) | Drops the Git pre-commit guard during `init`. |
 | Hook | `SessionStart (matcher: startup)` | [hooks/hooks.json](../hooks/hooks.json) | Injects drift context into Claude's session via `hookSpecificOutput.additionalContext`. |

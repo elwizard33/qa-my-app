@@ -38,6 +38,7 @@ flowchart TD
 | Script | `verify-result.mjs` | Schema gate on `result.md` before the runner's output enters the run. |
 | Script | `results-index.mjs` | Maintains `history.json`, `latest.json`, and per-task pointers. |
 | Script | `status.mjs` | Read-only inventory aggregator for `/qa-catalog:status`: browser-agent install state, route/task counts, integrations, last-run totals. Supports `--json`. |
+| Script | `auth-resolve.mjs` | Read-only per-role credential resolver. Reads the gitignored `QA-tests/.qa-catalog/auth.local.json`, interpolates `${ENV_VAR}` passwords, returns the `credentialsByRole` map (or a redacted status via `--status`). Never writes secrets. |
 | Script | `render-report.mjs` | Renders the self-contained `report.html` dashboard from the live `task-queue.json`. |
 | Script | `install-precommit.sh` | Drops the Git pre-commit guard during `init`. |
 | Hook | `SessionStart (matcher: startup)` | Injects drift context into Claude's session via `hookSpecificOutput.additionalContext`. |

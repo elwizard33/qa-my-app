@@ -15,10 +15,11 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `browser_channel` | `chromium` | For `playwright` / `chrome-devtools`: `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. Ignored by `stagehand`. |
 | `browser_headless` | `true` | Set false to watch agents work. Ignored by `stagehand` (cloud is always headless). |
 | `settle_ms` | `5000` | Wait after navigation before snapshot (0–60000). |
-| `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state`. |
-| `auth_username` | _empty_ | Used when `auth_mode = shared-credentials`. |
-| `auth_password` | _empty (sensitive)_ | Env-only. |
+| `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state` / `per-role`. |
+| `auth_username` | _empty_ | Single shared username, used when `auth_mode = shared-credentials`. |
+| `auth_password` | _empty (sensitive)_ | Single shared password. Env-only / OS keychain. |
 | `auth_storage_state_path` | _empty_ | Playwright storage-state JSON file. |
+| `auth_credentials_file` | _empty_ | Per-role credential map for `auth_mode = per-role` (default `QA-tests/.qa-catalog/auth.local.json`). Gitignored; passwords referenced via `${ENV_VAR}`. |
 | `default_role` | `anonymous` | Assumed role when guards don't restrict. |
 | `available_roles` | _empty_ | Multi-value list of roles the app supports — cross-referenced against route guards. |
 | `task_depth` | `deep` | `deep` / `standard` / `smoke`. |

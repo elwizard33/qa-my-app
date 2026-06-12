@@ -82,8 +82,33 @@
 | [F-071](#f-071) | 🟢 Low | `.github/dependabot.yml` | No Dependabot config to auto-bump SHA-pinned GitHub Actions. REJECTED for now — this repo has only 2 pinned actions (`checkout`, `setup-node`); they're upgraded as part of audit passes (F-051), and Dependabot SHA bumps would generate noise PRs the reviewer must SHA-verify anyway. Revisit if action count grows. | ✅ OK by design (Pass 6) | Pass 6 |
 | [F-072](#f-072) | 🟢 Low | repo root | `plugin-eval`-style quality framework (wshobson) — multi-criteria scoring with static + LLM-judge + Monte Carlo passes. REJECTED — wshobson runs it across hundreds of subagents in one repo; for a single-plugin repo the value is far below the maintenance cost. Strict-validator + skill/manifest fingerprinting in CI already covers the regression cases. | ✅ OK by design (Pass 6) | Pass 6 |
 | [F-073](#f-073) | 🟢 Low | settings | `disableSkillShellExecution: true` enterprise setting blocks `!\`cmd\`` skill substitutions. NOT a plugin-level change — it's a user-controlled `~/.claude/settings.json` flag. Documented here so enterprise integrators know the lever exists; our skills heavily use `!\`...\`` to gather project context, so the setting would disable that context block. | ✅ OK by design (Pass 6) | Pass 6 |
+| F-074 | 🔴 Critical | `agents/qa-test-runner.md` | The runner was instructed to **never mutate persistent state** and to only click modal **Cancel** — so authored happy-path "submit valid input → success toast / new row" steps were silently skipped at runtime. A QA tool that never submits a form can't confirm anything works. | ✅ Fixed (Pass 7) | Pass 7 |
+| F-075 | 🟠 High | `agents/test-author.md` | Happy-path template stopped at "the form is filled" — it never required an actual submit + concrete observable result, and authored from the analyzer JSON only (never read the route source for the real validation messages/limits). | ✅ Fixed (Pass 7) | Pass 7 |
+| F-076 | 🟡 Medium | `agents/qa-page-analyzer.md` | Field inventory captured constraints but no concrete sample values, so authored submissions had to guess valid/invalid data. | ✅ Fixed (Pass 7) | Pass 7 |
+| F-077 | 🟠 High | skills, `scripts/` | No change/ticket-scoped workflow — every run was either one task or the whole catalog. No way to "test what I just changed" or "verify this ticket's acceptance criteria." | ✅ Fixed (Pass 7 — new `/qa-catalog:verify` + `change-scope.mjs`) | Pass 7 |
 
-**Counts:** 73 findings tracked · 35 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
+**Counts:** 77 findings tracked · 39 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
+
+---
+
+## Pass 7 — 2026-06-12 — test-quality audit: make the tests human-like + change-aware
+
+**Scope:** the first audit pass targeting *test quality* rather than plugin-spec compliance (Passes 1–6). Driven by the question "does this plugin actually generate human-like tests that exercise every component and submit real data?" Answer at the start of the pass: **no** — the scaffolding was thorough but the runner was contractually forbidden from submitting anything, so happy-path coverage was theatre.
+
+### Findings + fixes
+
+- **F-074 (Critical)** — Reframed [agents/qa-test-runner.md](../agents/qa-test-runner.md): the runner now fills every form/dialog with the task's `Test data` and **submits for real**, asserting the concrete observable result (toast text, new/updated row, redirect, error banner). The blanket "never mutate persistent state" rule is replaced by a narrow guard on **destructive** actions only (delete/remove/destroy/purge-confirm) — the cancel path is always exercised; confirm-proceed requires explicit task authorization. This protects later tasks' seed data without neutering create/edit verification.
+- **F-075 (High)** — [agents/test-author.md](../agents/test-author.md): happy-path template now mandates fill-every-field → click exact submit label → assert concrete result → optional reload-to-confirm-persistence. Any form on a page now yields a real-submission task, not just a validation matrix. The author is also instructed to open the route `sourceFile` (and form-schema file) directly for exact validation messages/limits rather than relying on the analyzer's summary. Added optional `settings.acceptanceCriteria` (emits an `## Acceptance criteria` block mapping each criterion → TCs) and `settings.changedSummary`.
+- **F-076 (Medium)** — [agents/qa-page-analyzer.md](../agents/qa-page-analyzer.md): each field now carries a `sampleValid` + `sampleInvalid` value derived from its real constraints, so authored submissions use realistic data.
+- **F-077 (High)** — New **`/qa-catalog:verify`** skill ([skills/verify/SKILL.md](../skills/verify/SKILL.md)) + **`scripts/change-scope.mjs`**. Resolves scope from this conversation + uncommitted diff (default), `--branch [base]`, `--staged`, an explicit route/path, or a connected issue tracker's acceptance criteria (`verify PROJ-123`). Re-authors only the affected tasks and runs them via the existing `run-all` dispatch/verify loop, reporting pass/fail per acceptance criterion. The runner gains an `## Acceptance criteria` results table.
+
+### Deliberately NOT done (per user steer mid-pass)
+
+The initial audit recommended a **backend-contract analysis** stage (read API handlers/DB schema to derive server-side edge cases) and a **fixtures/seed/teardown** lifecycle. The user scoped this explicitly to **frontend** behavior: fill forms, submit, observe UI results/errors. No backend code-reading for edge cases, no DB seeding/cleanup machinery was added — edge cases are derived from the form's own (frontend) validation rules, which is what a human manual tester actually exercises. Re-evaluate backend-derived edge cases only if requested.
+
+### Validation
+
+`npx -y @anthropic-ai/claude-code plugin validate . --strict` → ✔ passed. `node --check scripts/change-scope.mjs` → clean; smoke-run returns `noCatalog:true` outside a catalog'd project as designed.
 
 ---
 

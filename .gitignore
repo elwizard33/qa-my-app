@@ -16,3 +16,9 @@ site/.astro/
 # Plugin runtime artifacts (created when the plugin runs against a target project)
 QA-tests/
 .playwright-mcp/
+
+# Per-role QA credentials (never commit — secrets live in env vars, sessions on disk).
+# In a target project these live under QA-tests/.qa-catalog/ (already covered above);
+# listed explicitly so the rule survives if QA-tests/ is ever un-ignored.
+QA-tests/.qa-catalog/auth.local.json
+QA-tests/.qa-catalog/state/

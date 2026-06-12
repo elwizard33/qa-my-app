@@ -18,6 +18,7 @@ This skill is **read-only** — it never writes to `QA-tests/`. Present the two 
 
 - If the browser agents are missing **or** `QA-tests/catalog.json` is absent → recommend `/qa-catalog:init`.
 - If drift was reported (`⚠ N route(s) drifted`) → recommend `/qa-catalog:sync`.
+- If a per-role credential is unresolved (the snapshot shows `✗ <role>: … missing <ENV_VAR>`) → tell the user to export that env var (or fill `auth.local.json`) before running that role's protected tasks.
 - If the catalog is present and up to date but there's no last run → recommend `/qa-catalog:run-all` (or `/qa-catalog:run <task>` for a single task).
 - If everything is current and a recent run exists → report the pass/fail/blocked totals and note the catalog is healthy; no action needed.
 

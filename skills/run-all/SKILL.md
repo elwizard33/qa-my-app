@@ -61,6 +61,12 @@ Build the **work list** `tasks = [{ taskId, taskFile, route, status: "pending", 
 
 If the work list is empty, stop and tell the user nothing matched.
 
+**Resolve per-role credentials once for the whole run.** When `auth_mode` is `per-role`, load the credential map (passwords interpolated from env vars) a single time:
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --json
+```
+Hold the returned `roles` object as `credentialsByRole` for the dispatch loop. If the file is absent (`present: false`) or `auth_mode` is not `per-role`, leave `credentialsByRole` unset and every runner falls back to the single shared credential. Surface any role with `resolved: false` to the user **once** here (e.g. "role `admin` has no QA_CRED_ADMIN_PASSWORD set — its tasks will be BLOCKED") so they can fix it before the run finishes. Never print resolved passwords.
+
 ### Phase 1 — Prepare run directory + task-queue index
 
 1. `runId = <UTC ISO-8601 second precision, ':' replaced with '-'>` — e.g. `2026-05-28T14-22-11Z`.
@@ -141,7 +147,9 @@ Repeat:
        "headless":         ${user_config.browser_headless},
        "settleMs":         ${user_config.settle_ms},
        "authMode":         "${user_config.auth_mode}",
+       "defaultRole":      "${user_config.default_role}",
        "credentials":      { "username": "${user_config.auth_username}", "password": "${user_config.auth_password}" },
+       "credentialsByRole": { ...the resolved roles object from Phase 0, or omit if not per-role... },
        "storageStatePath": "${user_config.auth_storage_state_path}"
      }
    }

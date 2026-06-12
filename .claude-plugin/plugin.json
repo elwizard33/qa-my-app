@@ -78,7 +78,7 @@
     "auth_mode": {
       "type": "string",
       "title": "Auth mode",
-      "description": "How protected routes are authenticated: none, shared-credentials (use the username/password below for every protected route), storage-state (reuse a Playwright storageState JSON from auth_storage_state_path).",
+      "description": "How protected routes are authenticated: none, shared-credentials (use the single username/password below for every protected route), storage-state (reuse a Playwright storageState JSON from auth_storage_state_path), per-role (look up the task's required role in the gitignored QA-tests/.qa-catalog/auth.local.json credential map — supports a different login per role).",
       "default": "none"
     },
     "auth_username": {
@@ -98,6 +98,12 @@
       "type": "file",
       "title": "Playwright storageState file",
       "description": "Path to a Playwright storageState JSON file (cookies + localStorage). Used when auth_mode is storage-state.",
+      "default": ""
+    },
+    "auth_credentials_file": {
+      "type": "file",
+      "title": "Per-role credential map",
+      "description": "Path to the per-role credential map used when auth_mode is per-role. Defaults to QA-tests/.qa-catalog/auth.local.json (scaffolded by /qa-catalog:init). This file is gitignored; it holds non-secret usernames + storageState paths and references passwords via ${ENV_VAR} so no plaintext secret is ever written to disk. Resolved by scripts/auth-resolve.mjs.",
       "default": ""
     },
     "default_role": {
