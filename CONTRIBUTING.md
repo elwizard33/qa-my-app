@@ -48,12 +48,14 @@ The single living audit log lives at [docs/AUDIT.md](docs/AUDIT.md).
 ## Workflow
 
 1. Fork → branch → edit. Keep commits focused.
-2. Run validation locally:
-   ```powershell
-   npx -y @anthropic-ai/claude-code plugin validate . --strict
-   npx -y @anthropic-ai/claude-code plugin validate ./.claude-plugin/plugin.json --strict
+2. Run the test suite and validation locally:
+   ```bash
+   npm test          # node --test "tests/*.test.mjs" — no install needed
+   npm run validate  # plugin validate --strict on both manifests
    ```
-3. If you touched any `.mjs` script, run `node --check scripts/<name>.mjs`.
+3. If you changed a `.mjs` script's behaviour, **add or update a test** under
+   `tests/`. The suite uses the built-in `node:test` runner and has no
+   dependencies — see [Testing](#testing).
 4. Update [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]` — every PR must
    describe its change there.
 5. Open the PR. Fill in the template. CI must pass.
@@ -111,6 +113,38 @@ Per the [plugin-marketplaces version-resolution
 docs](https://code.claude.com/docs/en/plugin-marketplaces#version-resolution),
 pinned `version` means users only update on bump — the CHANGELOG is therefore
 the canonical source of truth for what each release changes.
+
+## Testing
+
+The nine helpers under `scripts/` are the deterministic backbone of the plugin —
+drift detection, the result-schema gate, credential resolution. They're covered
+by a suite under `tests/` built on Node's built-in
+[`node:test`](https://nodejs.org/api/test.html) runner, so there is **nothing to
+install**:
+
+```bash
+npm test              # or: node --test "tests/*.test.mjs"
+npm run test:watch    # re-run on change while iterating
+```
+
+Every script reads its project root from `CLAUDE_PROJECT_DIR`, which is what
+makes them testable: each test builds a throwaway project tree in `os.tmpdir()`,
+points the env var at it, runs the script as a subprocess, and asserts on the
+JSON output **and the exit code** — several scripts (`catalog-diff --precommit`,
+`auth-resolve`, `verify-result`) use the exit code as their real signal, so a
+test that only checks stdout would miss a regression. Helpers live in
+[`tests/helpers.mjs`](tests/helpers.mjs).
+
+Guidelines when adding tests:
+
+- **Assert on the contract, not the implementation.** These scripts are consumed
+  by skills via their stdout JSON and exit code; that's the surface to pin.
+- **Cover the failure path.** The valuable tests here are the ones that catch a
+  result claiming `PASS` while a test case failed, or a credential silently
+  resolving to an empty password.
+- **Check your test can fail.** Break the code deliberately and confirm the test
+  catches it before you trust it. A suite that has never failed proves nothing.
+- Name tests as statements about behaviour, so a failure reads as a bug report.
 
 ## Audit log discipline
 

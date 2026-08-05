@@ -93,7 +93,11 @@
 | [F-081](#f-081) | 🟡 Medium | `agents/*.md`, docs | Browser MCPs referenced as `@latest`, so each spawn could fetch and execute a different build than the reviewed one — a supply-chain and marketplace-review risk. | ✅ Fixed (Pass 8 — pinned) | Pass 8 |
 | [F-082](#f-082) | 🟢 Low | `plugin.json`, repo | Plugin slug `qa-catalog` diverged from the repo/marketplace/docs brand `qa-my-app`. The slug becomes immutable once published to the community catalog, so the split had to be resolved before submission. | ✅ Fixed (Pass 8 — renamed) | Pass 8 |
 
-**Counts:** 82 findings tracked · 44 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
+| [F-083](#f-083) | 🟠 High | `scripts/*.mjs` | Nine deterministic Node helpers with **no behavioural tests** — CI ran `node --check` only, which validates syntax, not behaviour. A regression in `auth-resolve.mjs` (load-bearing for all auth modes as of F-078) or `verify-result.mjs` (the pass/fail gate) would ship silently. | ✅ Fixed (Pass 8 — 46 tests + CI) | Pass 8 |
+| [F-084](#f-084) | 🟡 Medium | `.github/` | `CONTRIBUTING.md` step 5 instructed contributors to "fill in the template" for PRs, but no `PULL_REQUEST_TEMPLATE.md` existed. | ✅ Fixed (Pass 8) | Pass 8 |
+| [F-085](#f-085) | 🟢 Low | repo root | No `CODE_OF_CONDUCT.md`. `CONTRIBUTING.md` carried a three-line Conduct section, but GitHub's community-health checks and most enterprise review checklists look for the standard file. | ✅ Fixed (Pass 8) | Pass 8 |
+
+**Counts:** 85 findings tracked · 47 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
 
 ---
 
@@ -114,9 +118,15 @@
 - **F-081 (Medium)** — Pinned `@playwright/mcp@0.0.78` and `chrome-devtools-mcp@1.6.0` across the agent templates, the `init` engine-swap blocks, and every doc. Floating `@latest` meant each parallel spawn could `npx`-fetch and execute a build nobody reviewed. Stagehand needs no pin — it's an HTTP MCP, not an npx process.
 - **F-082 (Low)** — Renamed the plugin `qa-catalog` → `qa-my-app` across 54 files, aligning slug, namespace, marketplace, repo, and docs site. The `QA-tests/.qa-catalog/` **data directory is deliberately unchanged** so existing catalogs, fingerprints, and `auth.local.json` files survive the upgrade; the rename was applied with that path sentinel-protected. Breaking for installed users (documented reinstall path in the [README](../README.md#install) and [CHANGELOG](../CHANGELOG.md)). Forced now because a plugin's slug is immutable once published to the community catalog.
 
+- **F-083 (High)** — Added a behavioural test suite: **46 tests** across [`tests/`](../tests/) covering `auth-resolve.mjs` (11), `verify-result.mjs` (15), `catalog-diff.mjs` (8), `fingerprint.mjs` (5), and `detect-framework.mjs` (7), wired into CI. Benchmarking prompted this: qa-my-app already exceeds Anthropic's own reference plugins (`example-plugin`, `plugin-dev`) on repo hygiene — those ship only a manifest, LICENSE, README, and component dirs — so docs and process were not the gap. Testing was. Built on the stdlib `node:test` runner to preserve the zero-dependency posture; every script resolves its root from `CLAUDE_PROJECT_DIR`, which makes black-box testing against a temp project tree straightforward. Tests assert on stdout JSON **and exit codes**, since `catalog-diff --precommit`, `auth-resolve`, and `verify-result` all signal through the exit code. **Mutation-checked**: disabling `verify-result`'s PASS-with-failing-TC consistency rule, and making `auth-resolve` ignore missing env vars, each broke exactly one test — confirming the suite has teeth rather than passing vacuously.
+- **F-084 (Medium)** — Added [`.github/PULL_REQUEST_TEMPLATE.md`](../.github/PULL_REQUEST_TEMPLATE.md) with the checks CI enforces plus the two easiest spec violations to make: banned frontmatter fields on plugin-scope agents, and `${user_config.<sensitive_key>}` in skill bodies (the F-078 class of bug).
+- **F-085 (Low)** — Added [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) (Contributor Covenant 2.1) with a real reporting address, and a `## Testing` section to `CONTRIBUTING.md`.
+
 ### Verification
 
 - `claude plugin validate --strict` passes on both manifests (marketplace and plugin, the latter checked in isolation since the repo root carries both).
+- `npm test` → 46/46 passing. `npm run check` → all 9 scripts syntactically valid.
+- Confirmed the new root `package.json` (dev-only, `private: true`, zero dependencies) does not affect plugin loading — `claude --plugin-dir .` still registers all 7 skills.
 - `node --check` passes on all 9 `scripts/*.mjs`.
 - `claude --plugin-dir .` registers all 7 skills under the new namespace — a functional load test, not just schema validation.
 - Both CI workflows green on the release commit.

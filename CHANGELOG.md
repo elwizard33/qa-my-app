@@ -6,6 +6,13 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- **Test suite — 46 behavioural tests** under `tests/`, run in CI on every push. Covers the deterministic Node helpers: `auth-resolve.mjs` (11), `verify-result.mjs` (15), `catalog-diff.mjs` (8), `fingerprint.mjs` (5), `detect-framework.mjs` (7). Built on the stdlib `node:test` runner — `npm test` requires no install, and the plugin keeps shipping zero dependencies. Tests assert on stdout JSON **and** exit codes, since several scripts signal through the exit code. Previously CI ran `node --check` only, which validates syntax rather than behaviour.
+- `.github/PULL_REQUEST_TEMPLATE.md` — `CONTRIBUTING.md` had instructed contributors to "fill in the template" since the repo's first release, but none existed.
+- `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1) with a reporting address.
+- Root `package.json` — dev-only, `private: true`, no dependencies. Provides `npm test`, `npm run test:watch`, `npm run check`, and `npm run validate`. Does not affect plugin loading.
+- `CONTRIBUTING.md` gains a `## Testing` section covering how the temp-project fixtures work and why exit codes are asserted.
+
 ## [1.0.0] — 2026-08-05
 
 First stable release, and the baseline submitted to the Claude Code community

@@ -7,6 +7,7 @@
 [![Validate plugin](https://github.com/elwizard33/qa-my-app/actions/workflows/validate.yml/badge.svg)](https://github.com/elwizard33/qa-my-app/actions/workflows/validate.yml)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://code.claude.com/docs/en/plugins)
 [![plugin validate --strict](https://img.shields.io/badge/plugin%20validate-strict-success)](https://code.claude.com/docs/en/plugins-reference)
+[![tests](https://img.shields.io/badge/tests-46%20passing-success)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
 
@@ -499,6 +500,7 @@ The plugin is validated against the published Claude Code contract (manifest, sk
 - Sensitive `userConfig` fields are `sensitive: true` and exposed only via env vars (`CLAUDE_PLUGIN_OPTION_<KEY>`).
 - Every path reference uses `${CLAUDE_PLUGIN_ROOT}` so the plugin works regardless of install location.
 - Subagents cannot spawn other subagents (per Claude docs). The parallel run-all orchestrator therefore lives in the **skill** layer (main session), which fans work out to N `qa-test-runner` subagents in batches.
+- The nine Node helpers under `scripts/` — the deterministic backbone: drift detection, the `result.md` schema gate, credential resolution — are covered by **46 behavioural tests** under [`tests/`](tests/), run in CI on every push. Built on the stdlib [`node:test`](https://nodejs.org/api/test.html) runner, so the repo keeps its zero-dependency posture: `npm test` needs no install. Tests assert on both stdout JSON **and exit codes**, since `catalog-diff --precommit`, `auth-resolve`, and `verify-result` all signal through the exit code. The suite is mutation-checked — deliberately breaking a rule makes exactly the test that covers it fail.
 - Issue-tracker MCPs (GitHub/Jira/ADO) are configured by the user at user-scope via `claude mcp add`, per [MCP docs](https://code.claude.com/docs/en/mcp). The plugin only prompts and prints the commands — it never stores credentials in the manifest.
 
 ---

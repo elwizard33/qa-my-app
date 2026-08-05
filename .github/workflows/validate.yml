@@ -35,15 +35,18 @@ jobs:
       - name: Validate plugin manifest (strict)
         run: npx -y @anthropic-ai/claude-code plugin validate ./.claude-plugin/plugin.json --strict
 
-      - name: Verify result.md schema script is syntactically valid
-        run: node --check scripts/verify-result.mjs
-
       - name: Verify all .mjs scripts are syntactically valid
         run: |
           for f in scripts/*.mjs; do
             echo "Checking $f"
             node --check "$f"
           done
+
+      # Behavioural tests for the deterministic Node helpers — the drift
+      # detector, the result-schema gate, and the credential resolver. Built on
+      # node:test so the repo keeps its zero-dependency posture.
+      - name: Run the script test suite
+        run: node --test "tests/*.test.mjs"
 
       - name: Verify marketplace source paths resolve to a real plugin
         run: |
