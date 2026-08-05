@@ -145,14 +145,14 @@
 <footer>
   <span>auto-refresh: <strong>{{refreshLabel}}</strong></span>
   <span>generated <code>{{generatedAt}}</code></span>
-  <span>qa-catalog plugin</span>
+  <span>qa-my-app plugin</span>
 </footer>
 
 <script>
   (function () {
     var done = {{doneJs}};
     var refreshMs = {{refreshMs}};
-    var key = "qa-catalog-autorefresh";
+    var key = "qa-my-app-autorefresh";
     var box = document.getElementById("auto");
     if (!box) return;
     var stored = localStorage.getItem(key);

@@ -7,7 +7,7 @@ import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 QA My App is **browser-engine agnostic**. The two browser-driving subagents (`qa-page-analyzer`, `qa-test-runner`) talk to a browser through a Model Context Protocol (MCP) server declared **inline** in each agent's frontmatter. Swapping that one `mcpServers` block swaps the engine — the agent prompts are written in capability terms (navigate, click, fill, snapshot, screenshot, evaluate, read console/network), so the same task catalog runs on any supported engine.
 
-The engine is selected with the `browser_engine` setting in `/plugin`. `/qa-catalog:init` Phase 0 writes the matching `mcpServers` block into `.claude/agents/` when it installs the two browser agents. If you change `browser_engine` later, re-run `/qa-catalog:init` (or edit the `mcpServers:` block by hand and commit).
+The engine is selected with the `browser_engine` setting in `/plugin`. `/qa-my-app:init` Phase 0 writes the matching `mcpServers` block into `.claude/agents/` when it installs the two browser agents. If you change `browser_engine` later, re-run `/qa-my-app:init` (or edit the `mcpServers:` block by hand and commit).
 
 ## Supported engines
 

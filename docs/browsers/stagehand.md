@@ -29,7 +29,7 @@ Reference: [Stagehand MCP setup](https://docs.stagehand.dev/v3/integrations/mcp/
 
 ## Configuration
 
-This plugin uses the **hosted (HTTP)** Browserbase MCP. `/qa-catalog:init` writes
+This plugin uses the **hosted (HTTP)** Browserbase MCP. `/qa-my-app:init` writes
 this `mcpServers` block into each project-level browser agent
 (`.claude/agents/qa-page-analyzer.md`, `.claude/agents/qa-test-runner.md`):
 

@@ -19,14 +19,14 @@ import { Aside } from '@astrojs/starlight/components';
 
 ## Configuration
 
-`/qa-catalog:init` writes this `mcpServers` block into each project-level browser agent:
+`/qa-my-app:init` writes this `mcpServers` block into each project-level browser agent:
 
 ```yaml
 mcpServers:
   - chrome-devtools:
       type: stdio
       command: npx
-      args: ["-y", "chrome-devtools-mcp@latest", "--isolated", "--headless"]
+      args: ["-y", "chrome-devtools-mcp@1.6.0", "--isolated", "--headless"]
 ```
 
 - `--isolated` gives each spawn a **temporary** user-data dir that is cleaned up on exit. This is important for parallel safety: without it, `chrome-devtools-mcp` shares a single profile dir across all instances and parallel runners would collide on cookies/`localStorage`.

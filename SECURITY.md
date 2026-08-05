@@ -46,7 +46,7 @@ local filesystem and shell access. The plugin itself adds:
 | `scripts/install-precommit.sh` | Writes a git `pre-commit` hook into the **target** project. Runs only when the user explicitly invokes the install script — never automatically. |
 | Bundled Playwright MCP | Drives a real browser against the URL given in `userConfig.dev_url` (or auto-detected from the project's framework manifest). Uses the user's local Playwright cache. The MCP server is hosted by the user's machine — no external services. |
 | `userConfig.auth_password` | Marked `sensitive: true`. Stored in the OS keychain via Claude Code's secure storage. Never substituted into rendered prompts. |
-| `QA-tests/.qa-catalog/auth.local.json` (per-role credential map) | **Gitignored** by `/qa-catalog:init`. Holds only non-secret usernames + storageState paths + `${ENV_VAR}` references — never a literal password. `scripts/auth-resolve.mjs` interpolates the env vars at resolution time; it is read-only and never writes secrets. Status reports redact every value. Per-role Playwright sessions live under `QA-tests/.qa-catalog/state/` (also gitignored). |
+| `QA-tests/.qa-catalog/auth.local.json` (per-role credential map) | **Gitignored** by `/qa-my-app:init`. Holds only non-secret usernames + storageState paths + `${ENV_VAR}` references — never a literal password. `scripts/auth-resolve.mjs` interpolates the env vars at resolution time; it is read-only and never writes secrets. Status reports redact every value. Per-role Playwright sessions live under `QA-tests/.qa-catalog/state/` (also gitignored). |
 | `userConfig.auth_username`, `dev_url`, `default_role`, `available_roles`, `auth_storage_state_path`, `auth_credentials_file`, etc. | Non-sensitive. Stored in `settings.json`. |
 
 ## Out of scope
@@ -66,7 +66,7 @@ Plugin-shipped subagents (`route-discoverer`, `test-author`,
 spec](https://code.claude.com/docs/en/plugins-reference#agents). The two
 browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) run at project
 scope — they declare inline `mcpServers` and are copied into `.claude/agents/`
-by `/qa-catalog:init`, so a malicious target site cannot escalate privilege
+by `/qa-my-app:init`, so a malicious target site cannot escalate privilege
 through a runner. The supervisor validates every `result.md` against
 `scripts/verify-result.mjs` before treating its contents as authoritative.
 

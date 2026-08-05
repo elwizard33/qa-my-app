@@ -6,7 +6,7 @@
 //
 // Inputs (read, never mutated):
 //   <runRoot>/task-queue.json  — source of truth for run-all (preferred)
-//   <runRoot>/run.json         — run metadata; for /qa-catalog:run (single task) also lists tasks
+//   <runRoot>/run.json         — run metadata; for /qa-my-app:run (single task) also lists tasks
 //   <runRoot>/<taskId>/result.md (optional — parsed if task-queue.json is missing fields)
 //
 // Output:
@@ -272,4 +272,4 @@ if (!arg) {
   process.exit(2);
 }
 const out = render(arg);
-console.log(`[qa-catalog] rendered ${out}`);
+console.log(`[qa-my-app] rendered ${out}`);

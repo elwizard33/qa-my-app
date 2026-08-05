@@ -4,7 +4,7 @@
 
 ## Run an audit
 
-1. Read every file in `.claude-plugin/`, `.mcp.json`, `hooks/`, `skills/**/SKILL.md`, `agents/*.md`, `scripts/*`.
+1. Read every file in `.claude-plugin/`, `hooks/`, `skills/**/SKILL.md`, `agents/*.md`, `scripts/*`.
 2. Fetch the latest of these six Claude Code doc pages:
    - https://code.claude.com/docs/en/plugins-reference
    - https://code.claude.com/docs/en/plugins

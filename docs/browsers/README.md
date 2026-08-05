@@ -8,10 +8,10 @@ capability terms (navigate, click, fill, snapshot, screenshot, evaluate, read
 console/network), so the same task catalog runs on any supported engine.
 
 The engine is selected with the `browser_engine` setting in `/plugin`
-(`.claude-plugin/plugin.json` → `userConfig.browser_engine`). `/qa-catalog:init`
+(`.claude-plugin/plugin.json` → `userConfig.browser_engine`). `/qa-my-app:init`
 Phase 0 writes the matching `mcpServers` block into `.claude/agents/` when it
 installs the two browser agents. If you change `browser_engine` later, re-run
-`/qa-catalog:init` (or edit the `mcpServers:` block in your project's
+`/qa-my-app:init` (or edit the `mcpServers:` block in your project's
 `.claude/agents/qa-page-analyzer.md` and `qa-test-runner.md` by hand and commit).
 
 ## Supported engines
@@ -34,7 +34,7 @@ Plugin-shipped subagents cannot declare inline `mcpServers` — Claude Code
 silently ignores the field for security
 ([docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)).
 That is exactly why the two browser agents live at **project scope** in
-`.claude/agents/` (copied there by `/qa-catalog:init` Phase 0). Declaring the
+`.claude/agents/` (copied there by `/qa-my-app:init` Phase 0). Declaring the
 engine inline gives every parallel spawn its **own** browser process/session, so
 runners never share cookies, `localStorage`, or auth state. Whichever engine you
 pick, keep that one-process-per-spawn property — it is what makes

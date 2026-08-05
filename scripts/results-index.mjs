@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Maintains the QA-tests/results index after a /qa-catalog:run or /qa-catalog:run-all invocation.
+// Maintains the QA-tests/results index after a /qa-my-app:run or /qa-my-app:run-all invocation.
 //
 // Usage:
 //   node results-index.mjs append <runRootAbsOrRelative>
@@ -133,4 +133,4 @@ for (const t of taskResults) {
   );
 }
 
-console.log(`[qa-catalog] indexed run ${runId}: ${summary.totals.pass} pass / ${summary.totals.fail} fail / ${summary.totals.blocked} blocked (${summary.totals.tasks} tasks)`);
+console.log(`[qa-my-app] indexed run ${runId}: ${summary.totals.pass} pass / ${summary.totals.fail} fail / ${summary.totals.blocked} blocked (${summary.totals.tasks} tasks)`);

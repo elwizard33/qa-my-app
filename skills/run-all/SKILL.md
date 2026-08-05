@@ -7,7 +7,7 @@ disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner)
 ---
 
-# /qa-catalog:run-all — Full-platform parallel test run
+# /qa-my-app:run-all — Full-platform parallel test run
 
 ## Project context
 - Catalog present: !`test -f QA-tests/catalog.json && echo YES || echo NO`
@@ -29,9 +29,9 @@ allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(node *), Bas
 
 ## Instructions
 
-If `Catalog present` is `NO`, stop and tell the user to run `/qa-catalog:init` first.
+If `Catalog present` is `NO`, stop and tell the user to run `/qa-my-app:init` first.
 
-This skill is the **supervisor**. It owns the task queue, hands work off to `qa-test-runner` (project-level, installed by `/qa-catalog:init` Phase 0) subagents, verifies each returned result, and re-dispatches until the queue is empty. Subagents are stateless workers — they get a task, they execute, they write `result.md` + screenshots, they return one JSON line, they're gone. The supervisor is the only thing that knows the run as a whole.
+This skill is the **supervisor**. It owns the task queue, hands work off to `qa-test-runner` (project-level, installed by `/qa-my-app:init` Phase 0) subagents, verifies each returned result, and re-dispatches until the queue is empty. Subagents are stateless workers — they get a task, they execute, they write `result.md` + screenshots, they return one JSON line, they're gone. The supervisor is the only thing that knows the run as a whole.
 
 ### Phase 0 — Pick which routes / tasks to test
 
@@ -66,6 +66,12 @@ If the work list is empty, stop and tell the user nothing matched.
 node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --json
 ```
 Hold the returned `roles` object as `credentialsByRole` for the dispatch loop. If the file is absent (`present: false`) or `auth_mode` is not `per-role`, leave `credentialsByRole` unset and every runner falls back to the single shared credential. Surface any role with `resolved: false` to the user **once** here (e.g. "role `admin` has no QA_CRED_ADMIN_PASSWORD set — its tasks will be BLOCKED") so they can fix it before the run finishes. Never print resolved passwords.
+
+When `auth_mode` is `shared-credentials`, resolve the default role through the same script — `auth_password` is `sensitive: true`, so Claude Code holds it in the OS keychain and **never substitutes it into skill or agent content**:
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --role "${user_config.default_role}" --json
+```
+Give the default role a `shared-credentials` entry in `auth.local.json` whose `password` is a `${ENV_VAR}` reference. Never inline `${user_config.auth_password}` into a runner payload — it resolves to that literal string, not the password.
 
 ### Phase 1 — Prepare run directory + task-queue index
 
@@ -148,7 +154,7 @@ Repeat:
        "settleMs":         ${user_config.settle_ms},
        "authMode":         "${user_config.auth_mode}",
        "defaultRole":      "${user_config.default_role}",
-       "credentials":      { "username": "${user_config.auth_username}", "password": "${user_config.auth_password}" },
+       "credentials":      { "username": "${user_config.auth_username}", "password": "<resolved via auth-resolve.mjs — never ${user_config.auth_password}>" },
        "credentialsByRole": { ...the resolved roles object from Phase 0, or omit if not per-role... },
        "storageStatePath": "${user_config.auth_storage_state_path}"
      }

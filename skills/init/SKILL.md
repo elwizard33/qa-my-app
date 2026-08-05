@@ -4,10 +4,10 @@ when_to_use: |
   Use when setting up QA testing for the first time, generating a QA catalog from scratch, or re-baselining the entire test suite. Trigger phrases include "set up QA", "generate tests", "init qa", "create test catalog", "bootstrap tests", and "start QA from scratch".
 argument-hint: [dev-server-url]
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bash(git *), Bash(mkdir *), Bash(claude mcp *), Agent(qa-catalog:route-discoverer), Agent(qa-page-analyzer), Agent(qa-catalog:test-author)
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bash(git *), Bash(mkdir *), Bash(claude mcp *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author)
 ---
 
-# /qa-catalog:init — Bootstrap QA-tests/
+# /qa-my-app:init — Bootstrap QA-tests/
 
 ## Project context
 - Repo root: !`git rev-parse --show-toplevel 2>/dev/null || pwd`
@@ -36,9 +36,9 @@ If any value is empty, fall back to a sensible default.
 
 ## Instructions
 
-When spawning subagents, use the **plugin-namespaced names** for the non-browser agents (`qa-catalog:route-discoverer`, `qa-catalog:test-author`) and the **project-level name** for the browser agent (`qa-page-analyzer`, installed in Phase 0 below). All are pre-approved in `allowed-tools` above.
+When spawning subagents, use the **plugin-namespaced names** for the non-browser agents (`qa-my-app:route-discoverer`, `qa-my-app:test-author`) and the **project-level name** for the browser agent (`qa-page-analyzer`, installed in Phase 0 below). All are pre-approved in `allowed-tools` above.
 
-If `Existing QA-tests folder` is `EXISTS`, **stop** and tell the user to run `/qa-catalog:sync` instead, or delete `QA-tests/` first.
+If `Existing QA-tests folder` is `EXISTS`, **stop** and tell the user to run `/qa-my-app:sync` instead, or delete `QA-tests/` first.
 
 Resolve the effective dev URL in this order: `$ARGUMENTS` → `${user_config.dev_url}` → framework-detected `devUrl`.
 
@@ -65,7 +65,7 @@ If either file already exists (e.g. the user has customised it), leave it unchan
     - chrome-devtools:
         type: stdio
         command: npx
-        args: ["-y", "chrome-devtools-mcp@latest", "--isolated", "--headless"]
+        args: ["-y", "chrome-devtools-mcp@1.6.0", "--isolated", "--headless"]
   ```
   (Drop `--headless` if `${user_config.browser_headless}` is `false`. Chrome-only.)
 - `stagehand` (Browserbase cloud, requires `BROWSERBASE_API_KEY` in the environment):
@@ -185,6 +185,12 @@ When `auth_mode` is `per-role`, first resolve the credential map once (passwords
 node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --json
 ```
 
+When `auth_mode` is `shared-credentials`, resolve the default role the same way — `auth_password` is `sensitive: true`, so Claude Code keeps it in the OS keychain and **never substitutes it into skill or agent content**:
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --role "${user_config.default_role}" --json
+```
+Give the default role a `shared-credentials` entry in `auth.local.json` whose `password` is a `${ENV_VAR}` reference. Never inline `${user_config.auth_password}` into an agent payload — it resolves to that literal string, not the password.
+
 Per-agent input:
 ```json
 {
@@ -196,7 +202,7 @@ Per-agent input:
     "settleMs": ${user_config.settle_ms},
     "authMode": "${user_config.auth_mode}",
     "defaultRole": "${user_config.default_role}",
-    "credentials": { "username": "${user_config.auth_username}", "password": "${user_config.auth_password}" },
+    "credentials": { "username": "${user_config.auth_username}", "password": "<resolved via auth-resolve.mjs — never ${user_config.auth_password}>" },
     "credentialsByRole": { ...roles object from auth-resolve.mjs, or omit if not per-role... },
     "storageStatePath": "${user_config.auth_storage_state_path}"
   }
@@ -274,7 +280,7 @@ After all tasks are authored, write:
      ]
    }
    ```
-   The `stack` block is sourced verbatim from `detect-framework.mjs` output. The `integrations` block records the Phase 0 selection so the test-runner can later file defects against the chosen tracker via its MCP. The `auth` block holds **no secrets** — `rolesUsed` is the distinct set of `rolesAllowed` across all routes (plus `defaultRole`), and `rolesConfigured` is the `rolesResolved` list from `node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --status --json`. It lets `/qa-catalog:status` report which roles still need credentials.
+   The `stack` block is sourced verbatim from `detect-framework.mjs` output. The `integrations` block records the Phase 0 selection so the test-runner can later file defects against the chosen tracker via its MCP. The `auth` block holds **no secrets** — `rolesUsed` is the distinct set of `rolesAllowed` across all routes (plus `defaultRole`), and `rolesConfigured` is the `rolesResolved` list from `node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --status --json`. It lets `/qa-my-app:status` report which roles still need credentials.
 2. `QA-tests/catalog.md` — human-readable table grouped by route, with columns: Path • Auth • Roles • Tasks.
 3. `QA-tests/routes/<slug>.md` — one file per route containing the raw Page Analysis (element inventory).
 4. `QA-tests/.qa-catalog/fingerprints.json` — `{ "<sourceFile>": "<sha256>" }` for every analyzed source file. Compute SHAs with: `node "${CLAUDE_PLUGIN_ROOT}/scripts/fingerprint.mjs" <files...>`.
@@ -284,7 +290,7 @@ Run:
 ```
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-precommit.sh"
 ```
-This writes `.git/hooks/pre-commit` that re-fingerprints staged files and blocks the commit if `QA-tests/catalog.json` is stale, prompting the user to run `/qa-catalog:sync`.
+This writes `.git/hooks/pre-commit` that re-fingerprints staged files and blocks the commit if `QA-tests/catalog.json` is stale, prompting the user to run `/qa-my-app:sync`.
 
 ### Phase 7 — Summary
 Print a **✓ checklist receipt** so the user can see exactly what was created, then the follow-up notes. Use the real numbers from this run (substitute the bracketed values):
@@ -301,11 +307,11 @@ Print a **✓ checklist receipt** so the user can see exactly what was created, 
   ✓ Issue trackers: <list selected, or "none">
   ✓ Pre-commit drift guard: <installed | skipped>
 
-  You're ready. Run /qa-catalog:run-all to execute the suite,
-  or /qa-catalog:status any time to check catalog health.
+  You're ready. Run /qa-my-app:run-all to execute the suite,
+  or /qa-my-app:status any time to check catalog health.
 ```
 
 Then add these notes below the receipt:
 - Effective parallelism used (page-analyzers / test-authors).
-- Reminder: run `/qa-catalog:sync` after code changes, or let the file-change hook nudge you.
+- Reminder: run `/qa-my-app:sync` after code changes, or let the file-change hook nudge you.
 - Commit `.claude/agents/qa-page-analyzer.md` and `.claude/agents/qa-test-runner.md` so the whole team shares the same browser-agent versions.

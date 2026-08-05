@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "qa-my-app",
   "description": "QA My App marketplace — end-to-end QA testing as a Claude Code plugin. Auto-discovers your stack and routes, drives every page in a real browser, runs parallel test-runner subagents, and files defects to GitHub/Jira/Azure DevOps.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "owner": {
     "name": "elwizard33",
     "email": "elwizard33@users.noreply.github.com",
@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "qa-catalog",
+      "name": "qa-my-app",
       "source": "./",
       "displayName": "QA My App",
       "description": "End-to-end QA testing as a Claude Code plugin. Drop it into any web-app repo and Claude detects the framework, walks every page in a real browser, drives every form / modal / button / role gate, runs the whole platform in parallel, and files defects with screenshots.",

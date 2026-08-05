@@ -7,14 +7,14 @@ import { Aside } from '@astrojs/starlight/components';
 
 | Agent | Scope | Purpose | Tools |
 |---|---|---|---|
-| `qa-catalog:route-discoverer` | plugin | Static route discovery + rich metadata (auth, roles, guards, HTTP methods, dynamic params, layout chain, feature flags). | `Read, Grep, Glob, Bash` |
+| `qa-my-app:route-discoverer` | plugin | Static route discovery + rich metadata (auth, roles, guards, HTTP methods, dynamic params, layout chain, feature flags). | `Read, Grep, Glob, Bash` |
 | `qa-page-analyzer` | **project** | Browser-driving deep element inventory per route — forms, validators, buttons, modals, tables — plus a `sampleValid`/`sampleInvalid` value per field so authored submissions use realistic data. Each spawn starts its own browser process — true isolation, no shared state between parallel runs. | inherits all except `Write`, `Edit`, `MultiEdit`, and destructive Bash patterns |
-| `qa-catalog:test-author` | plugin | Pure markdown — converts page analysis into task files using the enforced template. Reads the route source directly for exact validation rules; happy paths fill every field and **submit for real**. Accepts ticket acceptance criteria and emits an `## Acceptance criteria` block. | `Read, Write, Edit, Glob` |
+| `qa-my-app:test-author` | plugin | Pure markdown — converts page analysis into task files using the enforced template. Reads the route source directly for exact validation rules; happy paths fill every field and **submit for real**. Accepts ticket acceptance criteria and emits an `## Acceptance criteria` block. | `Read, Write, Edit, Glob` |
 | `qa-test-runner` | **project** | Browser-driving execution of one task → date-stamped `result.md` with embedded screenshots. **Fills and submits every form/dialog for real** and asserts the result; only destructive actions stay gated behind explicit task authorization. Designed for parallel fan-out, one isolated browser per runner. | inherits all except destructive Bash patterns |
-| `qa-catalog:catalog-reconciler` | plugin | Plans add/update/delete for `catalog.json` from the drift report. | `Read, Grep, Glob` |
+| `qa-my-app:catalog-reconciler` | plugin | Plans add/update/delete for `catalog.json` from the drift report. | `Read, Grep, Glob` |
 
 <Aside type="note" title="Why two project-scope agents">
-The two browser-driving agents live at project scope because plugin-shipped subagents cannot declare inline `mcpServers` (silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). `/qa-catalog:init` Phase 0 copies them into `.claude/agents/` so every parallel spawn gets its own dedicated browser process. Commit them so the whole team shares the same browser-agent versions.
+The two browser-driving agents live at project scope because plugin-shipped subagents cannot declare inline `mcpServers` (silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). `/qa-my-app:init` Phase 0 copies them into `.claude/agents/` so every parallel spawn gets its own dedicated browser process. Commit them so the whole team shares the same browser-agent versions.
 </Aside>
 
 All agents are `model: inherit` — they use whatever model your session is on. No model is hardcoded.

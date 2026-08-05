@@ -18,7 +18,7 @@
 | [F-007](#f-007) | 🟡 Medium | `agents/*.md` | No plugin subagent declares banned `hooks` / `mcpServers` / `permissionMode` | ✅ OK | Pass 1 |
 | [F-008](#f-008) | 🟡 Medium | `agents/*.md` | All subagents use `model: inherit` | ✅ OK | Pass 1 |
 | [F-009](#f-009) | 🟡 Medium | `skills/*/SKILL.md` | All workflow skills set `disable-model-invocation: true` | ✅ OK | Pass 1 |
-| [F-010](#f-010) | 🟡 Medium | `skills/*/SKILL.md` | Plugin-namespaced agent ids used (`Agent(qa-catalog:test-runner)` etc.) | ✅ OK | Pass 1 |
+| [F-010](#f-010) | 🟡 Medium | `skills/*/SKILL.md` | Plugin-namespaced agent ids used (`Agent(qa-my-app:test-runner)` etc.) | ✅ OK | Pass 1 |
 | [F-011](#f-011) | 🟢 Low | `plugin.json` `userConfig` | Types limited to `string \| number \| boolean \| directory \| file` | ✅ OK | Pass 1 |
 | [F-012](#f-012) | 🟢 Low | `plugin.json` `userConfig` | Sensitive fields marked `sensitive: true` | ✅ OK | Pass 1 |
 | [F-013](#f-013) | 🟢 Low | `hooks/hooks.json` | Hook timeouts in **seconds** (not ms) | ✅ OK | Pass 1 |
@@ -52,13 +52,13 @@
 | [F-041](#f-041) | 🟢 Low | `skills/*/SKILL.md` | No skill declared `when_to_use` — Claude could not auto-invoke the right skill from trigger phrases | ✅ Fixed (Pass 4) | Pass 4 |
 | [F-042](#f-042) | 🟢 Low | `skills/run-all/SKILL.md` | `disallowed-tools: AskUserQuestion` recommended for autonomous run loops | ✅ OK by design — AskUserQuestion needed for interactive route selection in Phase 0 | Pass 4 |
 | [F-043](#f-043) | 🟢 Low | `hooks/hooks.json` | `SessionStart` hook lacked `matcher: "startup"` — fired unnecessarily on resume/compact sessions | ✅ Fixed (Pass 4) | Pass 4 |
-| [F-044](#f-044) | 🟡 Medium | `skills/init/SKILL.md` | Body instruction still told Claude to spawn `qa-catalog:page-analyzer` — Pass-4 rename leftover; Phase 3 actually dispatches `qa-page-analyzer` | ✅ Fixed (Pass 5) | Pass 5 |
-| [F-045](#f-045) | 🟡 Medium | `skills/run-all/SKILL.md` | Two body references to `qa-catalog:test-runner` — `allowed-tools` and dispatch already use the project-scope `qa-test-runner` | ✅ Fixed (Pass 5) | Pass 5 |
-| [F-046](#f-046) | 🟡 Medium | `skills/run/SKILL.md` | Frontmatter `description` still said "via the qa-catalog:test-runner subagent" — Pass-4 rename leftover | ✅ Fixed (Pass 5) | Pass 5 |
+| [F-044](#f-044) | 🟡 Medium | `skills/init/SKILL.md` | Body instruction still told Claude to spawn `qa-my-app:page-analyzer` — Pass-4 rename leftover; Phase 3 actually dispatches `qa-page-analyzer` | ✅ Fixed (Pass 5) | Pass 5 |
+| [F-045](#f-045) | 🟡 Medium | `skills/run-all/SKILL.md` | Two body references to `qa-my-app:test-runner` — `allowed-tools` and dispatch already use the project-scope `qa-test-runner` | ✅ Fixed (Pass 5) | Pass 5 |
+| [F-046](#f-046) | 🟡 Medium | `skills/run/SKILL.md` | Frontmatter `description` still said "via the qa-my-app:test-runner subagent" — Pass-4 rename leftover | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-047](#f-047) | 🟠 High | `agents/page-analyzer.md`, `agents/test-runner.md` | Both dead plugin-shipped agents still shipped in the package, still referenced the non-existent `mcp__playwright__browser_new_context` tool, and were no longer dispatched by any skill after the Pass-4 split. Confusing for users browsing `agents/`. | ✅ Fixed (Pass 5 — deleted) | Pass 5 |
 | [F-048](#f-048) | 🟡 Medium | `agents/qa-page-analyzer.md` | The new project-scope analyzer lost the original plugin agent's `disallowedTools: Write, Edit` guard during the Pass-4 split. The analyzer only returns JSON — writes are out of contract. | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-049](#f-049) | 🟢 Low | `skills/init/SKILL.md` | `allowed-tools` granted `Bash(npx *)` but the skill only prints copy-paste commands — never runs npx itself. Over-broad. | ✅ Fixed (Pass 5) | Pass 5 |
-| [F-050](#f-050) | 🟡 Medium | `README.md`, `CONTRIBUTING.md` | Subagent table + body still listed `qa-catalog:page-analyzer` / `qa-catalog:test-runner` after the Pass-4 rename to project-scope `qa-page-analyzer` / `qa-test-runner` | ✅ Fixed (Pass 5) | Pass 5 |
+| [F-050](#f-050) | 🟡 Medium | `README.md`, `CONTRIBUTING.md` | Subagent table + body still listed `qa-my-app:page-analyzer` / `qa-my-app:test-runner` after the Pass-4 rename to project-scope `qa-page-analyzer` / `qa-test-runner` | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-051](#f-051) | 🟠 High | `.github/workflows/validate.yml` | Used floating `actions/checkout@v4` + `actions/setup-node@v4` tags — exploitable on retag attacks. Best-in-class plugins (anthropics, wshobson) pin every action by commit SHA. | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-052](#f-052) | 🟢 Low | `.github/workflows/validate.yml` | Checkout did not set `persist-credentials: false` — GITHUB_TOKEN persisted into the working tree. | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-053](#f-053) | 🟢 Low | `.github/workflows/validate.yml` | No verification that each `marketplace.json` `source` entry resolves to a real `.claude-plugin/plugin.json`. Added a node step matching the wshobson pattern. | ✅ Fixed (Pass 5) | Pass 5 |
@@ -67,14 +67,14 @@
 | [F-056](#f-056) | 🟢 Low | repo root | No `AGENTS.md` cross-harness conventions file — Anthropic's [memory#agentsmd-interop](https://code.claude.com/docs/en/memory#agentsmd-interop) interop pattern absent. | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-057](#f-057) | 🟢 Low | `.claude-plugin/marketplace.json` | Missing `metadata` block + per-plugin `tags` array. flow-next and wshobson both ship the marketplace-level `metadata`. | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-058](#f-058) | 🟢 Low | `.claude-plugin/marketplace.json` | Per-plugin `author` object lacked `email` and `url` (those fields existed only on the plugin manifest). Owner record now also has `url`. | ✅ Fixed (Pass 5) | Pass 5 |
-| [F-059](#f-059) | 🟢 Low | repo root | `commands/` directory absent. Considered after famous-plugin survey — REJECTED: plugin skills already auto-become `/qa-catalog:*` slash commands per [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills), so a separate `commands/` would be redundant. | ✅ OK by design (Pass 5) | Pass 5 |
+| [F-059](#f-059) | 🟢 Low | repo root | `commands/` directory absent. Considered after famous-plugin survey — REJECTED: plugin skills already auto-become `/qa-my-app:*` slash commands per [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills), so a separate `commands/` would be redundant. | ✅ OK by design (Pass 5) | Pass 5 |
 | [F-060](#f-060) | 🟢 Low | `agents/*.md` | `<example>...<commentary>...</example>` blocks in agent descriptions (Anthropic `plugin-validator` pattern). REJECTED: every spawn in this plugin is by-name from skill instructions, never natural-language matched. | ✅ OK by design (Pass 5) | Pass 5 |
 | [F-061](#f-061) | 🟢 Low | n/a | `.codex-plugin/plugin.json` parallel manifest for Codex CLI compatibility (flow-next pattern). REJECTED — multi-harness reach not in scope. | ✅ OK by design (Pass 5) | Pass 5 |
 | [F-062](#f-062) | 🟢 Low | `skills/*/` | `references/` + `examples/` + `scripts/` subdirectories per skill (Anthropic `plugin-dev` pattern). REJECTED — current `SKILL.md` files fit within Codex's 8KB / Claude's 1,536-char cap. | ✅ OK by design (Pass 5) | Pass 5 |
 | [F-063](#f-063) | 🟡 Medium | `hooks/hooks.json` | `asyncRewake` + `rewakeMessage` for background test runs (Anthropic `security-guidance` pattern). DEFERRED — the run-all supervisor already streams results synchronously. | ⚠️ Open (deferred to future pass) | Pass 5 |
 | [F-064](#f-064) | 🔴 Critical | `skills/*/SKILL.md` | Pass-4 introduced `when_to_use: Use ... Trigger phrases: "..."` — the colon-space-quote inside an unquoted scalar makes YAML parse `phrases:` as a nested mapping key. Strict validator now rejects every skill; at runtime ALL frontmatter (incl. `disable-model-invocation`, `argument-hint`, `allowed-tools`) is silently dropped. The Pass-4 audit's "Validation passed" claim was wrong. | ✅ Fixed (Pass 5) | Pass 5 |
 | [F-065](#f-065) | 🟢 Low | repo root | `CLAUDE.md` at plugin root rejected by validator with warning "not loaded as project context". The CLAUDE.md mechanism only loads from the user's project root, not from a plugin. | ✅ Fixed (Pass 5 — file removed) | Pass 5 |
-| [F-066](#f-066) | 🟡 Medium | `hooks/hooks.json`, `scripts/catalog-diff.mjs` | `SessionStart` hook only printed a stderr nudge — it never injected drift info into Claude's session context via the documented `hookSpecificOutput.additionalContext` JSON channel, so Claude wouldn't proactively suggest `/qa-catalog:sync` at session boot. | ✅ Fixed (Pass 6) | Pass 6 |
+| [F-066](#f-066) | 🟡 Medium | `hooks/hooks.json`, `scripts/catalog-diff.mjs` | `SessionStart` hook only printed a stderr nudge — it never injected drift info into Claude's session context via the documented `hookSpecificOutput.additionalContext` JSON channel, so Claude wouldn't proactively suggest `/qa-my-app:sync` at session boot. | ✅ Fixed (Pass 6) | Pass 6 |
 | [F-067](#f-067) | 🟠 High | `.claude-plugin/marketplace.json` | Plugin entry duplicated `version: "0.2.0"` already declared in `plugin.json`. Per [plugin-marketplaces docs](https://code.claude.com/docs/en/plugin-marketplaces#version-resolution), `plugin.json` always wins silently — a stale duplicate creates an invisible drift trap on every release bump. | ✅ Fixed (Pass 6) | Pass 6 |
 | [F-068](#f-068) | 🟡 Medium | `agents/qa-test-runner.md`, `agents/qa-page-analyzer.md` | Project-scope browser agents had no `disallowedTools` denylist. A misbehaving prompt could in principle have them run `git push`, `rm -rf`, `npm publish`, etc. Defense-in-depth on top of existing scope restrictions. | ✅ Fixed (Pass 6) | Pass 6 |
 | [F-069](#f-069) | 🟢 Low | `hooks/hooks.json` | Hooks lacked `statusMessage` field — users saw a silent ~10s pause at session boot with no indication what was running. Docs added the field for exactly this UX gap. | ✅ Fixed (Pass 6) | Pass 6 |
@@ -85,7 +85,7 @@
 | F-074 | 🔴 Critical | `agents/qa-test-runner.md` | The runner was instructed to **never mutate persistent state** and to only click modal **Cancel** — so authored happy-path "submit valid input → success toast / new row" steps were silently skipped at runtime. A QA tool that never submits a form can't confirm anything works. | ✅ Fixed (Pass 7) | Pass 7 |
 | F-075 | 🟠 High | `agents/test-author.md` | Happy-path template stopped at "the form is filled" — it never required an actual submit + concrete observable result, and authored from the analyzer JSON only (never read the route source for the real validation messages/limits). | ✅ Fixed (Pass 7) | Pass 7 |
 | F-076 | 🟡 Medium | `agents/qa-page-analyzer.md` | Field inventory captured constraints but no concrete sample values, so authored submissions had to guess valid/invalid data. | ✅ Fixed (Pass 7) | Pass 7 |
-| F-077 | 🟠 High | skills, `scripts/` | No change/ticket-scoped workflow — every run was either one task or the whole catalog. No way to "test what I just changed" or "verify this ticket's acceptance criteria." | ✅ Fixed (Pass 7 — new `/qa-catalog:verify` + `change-scope.mjs`) | Pass 7 |
+| F-077 | 🟠 High | skills, `scripts/` | No change/ticket-scoped workflow — every run was either one task or the whole catalog. No way to "test what I just changed" or "verify this ticket's acceptance criteria." | ✅ Fixed (Pass 7 — new `/qa-my-app:verify` + `change-scope.mjs`) | Pass 7 |
 
 **Counts:** 77 findings tracked · 39 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
 
@@ -100,7 +100,7 @@
 - **F-074 (Critical)** — Reframed [agents/qa-test-runner.md](../agents/qa-test-runner.md): the runner now fills every form/dialog with the task's `Test data` and **submits for real**, asserting the concrete observable result (toast text, new/updated row, redirect, error banner). The blanket "never mutate persistent state" rule is replaced by a narrow guard on **destructive** actions only (delete/remove/destroy/purge-confirm) — the cancel path is always exercised; confirm-proceed requires explicit task authorization. This protects later tasks' seed data without neutering create/edit verification.
 - **F-075 (High)** — [agents/test-author.md](../agents/test-author.md): happy-path template now mandates fill-every-field → click exact submit label → assert concrete result → optional reload-to-confirm-persistence. Any form on a page now yields a real-submission task, not just a validation matrix. The author is also instructed to open the route `sourceFile` (and form-schema file) directly for exact validation messages/limits rather than relying on the analyzer's summary. Added optional `settings.acceptanceCriteria` (emits an `## Acceptance criteria` block mapping each criterion → TCs) and `settings.changedSummary`.
 - **F-076 (Medium)** — [agents/qa-page-analyzer.md](../agents/qa-page-analyzer.md): each field now carries a `sampleValid` + `sampleInvalid` value derived from its real constraints, so authored submissions use realistic data.
-- **F-077 (High)** — New **`/qa-catalog:verify`** skill ([skills/verify/SKILL.md](../skills/verify/SKILL.md)) + **`scripts/change-scope.mjs`**. Resolves scope from this conversation + uncommitted diff (default), `--branch [base]`, `--staged`, an explicit route/path, or a connected issue tracker's acceptance criteria (`verify PROJ-123`). Re-authors only the affected tasks and runs them via the existing `run-all` dispatch/verify loop, reporting pass/fail per acceptance criterion. The runner gains an `## Acceptance criteria` results table.
+- **F-077 (High)** — New **`/qa-my-app:verify`** skill ([skills/verify/SKILL.md](../skills/verify/SKILL.md)) + **`scripts/change-scope.mjs`**. Resolves scope from this conversation + uncommitted diff (default), `--branch [base]`, `--staged`, an explicit route/path, or a connected issue tracker's acceptance criteria (`verify PROJ-123`). Re-authors only the affected tasks and runs them via the existing `run-all` dispatch/verify loop, reporting pass/fail per acceptance criterion. The runner gains an `## Acceptance criteria` results table.
 
 ### Deliberately NOT done (per user steer mid-pass)
 
@@ -134,7 +134,7 @@ The docs audit found capabilities the plugin had not yet adopted that are NOT co
 | Capability | Docs section | Status before Pass 5 | Action |
 |---|---|---|---|
 | Plugin-root `CLAUDE.md` is **not** loaded | plugin manifest validator warning | n/a | Removed (F-065) |
-| Skills auto-become `/qa-catalog:*` slash commands | [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills) | Already true | No separate `commands/` dir needed (F-059) |
+| Skills auto-become `/qa-my-app:*` slash commands | [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills) | Already true | No separate `commands/` dir needed (F-059) |
 | `paths` glob on skills | [skills → Frontmatter reference](https://code.claude.com/docs/en/skills#frontmatter-reference) | Not used | Not applicable — skills are user-invocable, not auto-injected |
 | `arguments` named positional args | same | Not used | Skip — `$ARGUMENTS` raw is sufficient for our single-arg skills |
 | Subagent `skills:` preload field | [sub-agents → Supported frontmatter](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) | Not used | Skip — agents read instructions from the spawn payload, not from preloaded skills |
@@ -177,13 +177,13 @@ Second deep survey across `anthropics/claude-code` bundled plugins (13), `wshobs
 - **F-065** — Deleted plugin-root `CLAUDE.md` (validator rejected it).
 
 **Pass-4 rename leftovers (production-impact):**
-- **F-044** — Updated [skills/init/SKILL.md](../skills/init/SKILL.md) line 36 instruction to use the project-scope `qa-page-analyzer` name (not `qa-catalog:page-analyzer`).
+- **F-044** — Updated [skills/init/SKILL.md](../skills/init/SKILL.md) line 36 instruction to use the project-scope `qa-page-analyzer` name (not `qa-my-app:page-analyzer`).
 - **F-045** — Updated [skills/run-all/SKILL.md](../skills/run-all/SKILL.md) body lines (33, 225) to reference `qa-test-runner` (project-scope), matching the `allowed-tools` declaration.
-- **F-046** — Rewrote [skills/run/SKILL.md](../skills/run/SKILL.md) frontmatter `description` to reference `qa-test-runner` instead of the stale `qa-catalog:test-runner`. Also updated the in-skill link to [agents/qa-test-runner.md](../agents/qa-test-runner.md).
+- **F-046** — Rewrote [skills/run/SKILL.md](../skills/run/SKILL.md) frontmatter `description` to reference `qa-test-runner` instead of the stale `qa-my-app:test-runner`. Also updated the in-skill link to [agents/qa-test-runner.md](../agents/qa-test-runner.md).
 - **F-047** — Deleted `agents/page-analyzer.md` and `agents/test-runner.md`. These plugin-shipped agents still referenced the non-existent `mcp__playwright__browser_new_context` tool and were no longer dispatched by any skill after the Pass-4 split. Their continued presence in `agents/` confused readers about which agents are active.
 - **F-048** — Added `disallowedTools: Write, Edit, MultiEdit` to [agents/qa-page-analyzer.md](../agents/qa-page-analyzer.md). The Pass-4 split lost the original guard; analyzers return JSON only.
 - **F-049** — Removed unused `Bash(npx *)` from [skills/init/SKILL.md](../skills/init/SKILL.md) `allowed-tools`. The skill only prints copy-paste commands.
-- **F-050** — Synced [README.md](../README.md) subagent table + body text and [CONTRIBUTING.md](../CONTRIBUTING.md) layout section with the post-rename reality. The subagent table now distinguishes plugin-scope (`qa-catalog:*`) from project-scope (`qa-page-analyzer`, `qa-test-runner`) and explains the inline-`mcpServers` rationale.
+- **F-050** — Synced [README.md](../README.md) subagent table + body text and [CONTRIBUTING.md](../CONTRIBUTING.md) layout section with the post-rename reality. The subagent table now distinguishes plugin-scope (`qa-my-app:*`) from project-scope (`qa-page-analyzer`, `qa-test-runner`) and explains the inline-`mcpServers` rationale.
 
 **Supply-chain & governance (CI workflow + repo files):**
 - **F-051** — Pinned actions in [.github/workflows/validate.yml](../.github/workflows/validate.yml) by commit SHA with `# version` comments: `actions/checkout@de0fac2…` (v6.0.2) and `actions/setup-node@48b55a01…` (v6.4.0). Resolved live from the action repositories via `gh api`. Mitigates retag attacks per GitHub's [security hardening guide](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions).
@@ -198,11 +198,11 @@ Second deep survey across `anthropics/claude-code` bundled plugins (13), `wshobs
 - **F-058** — Enriched per-plugin `author` in marketplace.json with `email` and `url` (was previously name-only despite the same data being present in plugin.json). Added `url` to the marketplace `owner` block.
 
 **Considered + explicitly rejected (with reasoning preserved):**
-- **F-059** — A `commands/` directory mirroring skills as user-typeable slash commands. **Rejected**: plugin skills already auto-become `/qa-catalog:*` per [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills). Adding `commands/` would either shadow or duplicate the auto-mapped paths.
-- **F-060** — `<example>...<commentary>...</example>` blocks inside agent descriptions (the Anthropic `plugin-validator` pattern that boosts natural-language agent selection). **Rejected**: every spawn in this plugin is by-name from skill instructions (`Agent(qa-catalog:test-author)` etc.). Description-matched auto-selection never fires for these agents.
+- **F-059** — A `commands/` directory mirroring skills as user-typeable slash commands. **Rejected**: plugin skills already auto-become `/qa-my-app:*` per [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills). Adding `commands/` would either shadow or duplicate the auto-mapped paths.
+- **F-060** — `<example>...<commentary>...</example>` blocks inside agent descriptions (the Anthropic `plugin-validator` pattern that boosts natural-language agent selection). **Rejected**: every spawn in this plugin is by-name from skill instructions (`Agent(qa-my-app:test-author)` etc.). Description-matched auto-selection never fires for these agents.
 - **F-061** — `.codex-plugin/plugin.json` parallel manifest (flow-next's Codex CLI interop pattern). **Rejected**: Codex CLI support is not in scope. Re-evaluate if and when users request it.
 - **F-062** — `skills/<name>/references/` + `examples/` + `scripts/` subdirectories (Anthropic `plugin-dev` pattern). **Rejected**: current `SKILL.md` files are within 5–10 KB, well under both Codex's 8 KB SKILL.md cap and Claude's 1,536-character skill-listing description cap. Reorganize only if a skill grows past these thresholds.
-- **F-063** — `asyncRewake` + `rewakeMessage` hooks for background test runs (Anthropic `security-guidance` pattern). **Deferred**: would let `/qa-catalog:run-all` fire-and-forget while results stream back into the conversation when complete. The current supervisor pattern (synchronous dispatch-verify-update loop) already provides this UX inside one turn. Worth revisiting if users ask for "kick off the test run and come back to it later".
+- **F-063** — `asyncRewake` + `rewakeMessage` hooks for background test runs (Anthropic `security-guidance` pattern). **Deferred**: would let `/qa-my-app:run-all` fire-and-forget while results stream back into the conversation when complete. The current supervisor pattern (synchronous dispatch-verify-update loop) already provides this UX inside one turn. Worth revisiting if users ask for "kick off the test run and come back to it later".
 
 ### Validation
 
@@ -239,7 +239,7 @@ Both manifests end-clean. `node --check` on every `.mjs` helper passes. Pass-4's
 
 - **F-039** — Added `"email": "elwizard33@users.noreply.github.com"` to the `owner` object in [.claude-plugin/marketplace.json](../.claude-plugin/marketplace.json). Completes the owner record expected by marketplace distribution tooling.
 
-- **F-040** — Added a distinct `color` to each of the five agent files: `page-analyzer` → **blue**, `route-discoverer` → **green**, `test-author` → **yellow**, `test-runner` → **orange**, `catalog-reconciler` → **purple**. With up to 12 parallel agents running simultaneously during a `/qa-catalog:run-all`, color differentiation in the task panel is the only way for the user to track which type of agent each progress row represents.
+- **F-040** — Added a distinct `color` to each of the five agent files: `page-analyzer` → **blue**, `route-discoverer` → **green**, `test-author` → **yellow**, `test-runner` → **orange**, `catalog-reconciler` → **purple**. With up to 12 parallel agents running simultaneously during a `/qa-my-app:run-all`, color differentiation in the task panel is the only way for the user to track which type of agent each progress row represents.
 
 - **F-041** — Added `when_to_use` to all five skills ([init](../skills/init/SKILL.md), [scan](../skills/scan/SKILL.md), [sync](../skills/sync/SKILL.md), [run](../skills/run/SKILL.md), [run-all](../skills/run-all/SKILL.md)). The field tells Claude which natural-language trigger phrases should auto-invoke each skill. Without it, Claude falls back to matching only the `description` text, which is less precise and can fail to activate the right skill.
 
@@ -279,7 +279,7 @@ Both manifests end-clean. `node --check` on every `.mjs` helper passes. Pass-4's
 
 **Changes applied this pass:**
 
-- **F-029** — Added [.claude-plugin/marketplace.json](../.claude-plugin/marketplace.json) — single-plugin self-marketplace. Users can now run `/plugin marketplace add elwizard33/qa-my-app` followed by `/plugin install qa-catalog@qa-my-app` instead of cloning + `--plugin-dir`. Carries `$schema`, `owner`, `category: "testing"`, and the same `keywords` block as `plugin.json`.
+- **F-029** — Added [.claude-plugin/marketplace.json](../.claude-plugin/marketplace.json) — single-plugin self-marketplace. Users can now run `/plugin marketplace add elwizard33/qa-my-app` followed by `/plugin install qa-my-app@qa-my-app` instead of cloning + `--plugin-dir`. Carries `$schema`, `owner`, `category: "testing"`, and the same `keywords` block as `plugin.json`.
 - **F-030** — Added [CHANGELOG.md](../CHANGELOG.md) at repo root. Keep-a-Changelog format. Documents 0.1.0 → 0.2.0 (Pass 1+2 fixes) and the Unreleased Pass 3 additions. Required because `plugin.json` pins an explicit `version` — per [plugin-marketplaces docs](https://code.claude.com/docs/en/plugin-marketplaces#version-resolution), pinned plugins only update on bump, so the bump cadence must be visible to users.
 - **F-031** — Added [LICENSE](../LICENSE) (MIT) at repo root matching the `plugin.json` `license` declaration. Anthropic's bundled plugins, flow-next, and the composio list all ship a LICENSE file; lawyers will refuse to install a plugin whose license is asserted but not present.
 - **F-032** — Added [.github/workflows/validate.yml](../.github/workflows/validate.yml). Runs `npx -y @anthropic-ai/claude-code plugin validate . --strict` on every push + PR + manual dispatch, plus `node --check` on every `.mjs` helper script. Mirrors the CI gate on anthropic/claude-code itself.
@@ -293,7 +293,7 @@ Both manifests end-clean. `node --check` on every `.mjs` helper passes. Pass-4's
 - **`bin/` directory** — no binaries to expose. All `.mjs` helpers are invoked via `node ${CLAUDE_PLUGIN_ROOT}/scripts/...` from hooks/skills; promoting them to `bin/` would just add an indirection.
 - **`experimental.monitors`** — experimental field. Avoid in a release plugin until it leaves experimental.
 - **`SubagentStop` hook** — runner already writes a deterministic `result.md` per task and the supervisor verifies them in-loop; a `SubagentStop` hook would be redundant.
-- **Restructure to `plugins/qa-catalog/` subfolder** (anthropic / flow-next layout) — breaking change for every existing `--plugin-dir` user and every hook path. The single-plugin-at-root + `"source": "./"` marketplace pattern is explicitly allowed by [plugin-marketplaces → Source field](https://code.claude.com/docs/en/plugin-marketplaces#source-field).
+- **Restructure to `plugins/qa-my-app/` subfolder** (anthropic / flow-next layout) — breaking change for every existing `--plugin-dir` user and every hook path. The single-plugin-at-root + `"source": "./"` marketplace pattern is explicitly allowed by [plugin-marketplaces → Source field](https://code.claude.com/docs/en/plugin-marketplaces#source-field).
 
 **Validation:** `npx -y @anthropic-ai/claude-code plugin validate . --strict` → see closing line below.
 
@@ -360,7 +360,7 @@ Both manifests end-clean. `node --check` on every `.mjs` helper passes. Pass-4's
 
 `displayName` is the human-visible label per [plugins-reference → Metadata fields](https://code.claude.com/docs/en/plugins-reference#metadata-fields). It was "QA Catalog" — the product brand is "QA My App".
 
-**Fix:** `displayName` → `"QA My App"`. Internal `name: "qa-catalog"` kept so namespaced references (`Agent(qa-catalog:test-runner)`, `/qa-catalog:init`) don't break.
+**Fix:** `displayName` → `"QA My App"`. Internal `name: "qa-my-app"` kept so namespaced references (`Agent(qa-my-app:test-runner)`, `/qa-my-app:init`) don't break.
 
 ---
 
@@ -428,7 +428,7 @@ Per [skills → Control who invokes a skill](https://code.claude.com/docs/en/ski
 
 **Severity:** 🟡 Medium · **Status:** ✅ OK (Pass 1)
 
-Skills reference agents as `Agent(qa-catalog:<name>)` per [sub-agents → Plugin subagents](https://code.claude.com/docs/en/sub-agents#choose-the-subagent-scope). ✓
+Skills reference agents as `Agent(qa-my-app:<name>)` per [sub-agents → Plugin subagents](https://code.claude.com/docs/en/sub-agents#choose-the-subagent-scope). ✓
 
 ---
 
@@ -667,9 +667,9 @@ No additional code change — included in the F-029 fix.
 | [agents/qa-page-analyzer.md](../agents/qa-page-analyzer.md) | Project-level page-analyzer with inline `mcpServers: playwright (stdio)` |
 | [agents/qa-test-runner.md](../agents/qa-test-runner.md) | Project-level test-runner with inline `mcpServers: playwright (stdio)` |
 
-The docs state: *"Inline servers defined here are connected when the subagent starts and disconnected when it finishes."* Each parallel spawn of `qa-page-analyzer` or `qa-test-runner` starts its own `npx @playwright/mcp@latest` process — a fully independent Chromium/Firefox/WebKit instance with no shared state.
+The docs state: *"Inline servers defined here are connected when the subagent starts and disconnected when it finishes."* Each parallel spawn of `qa-page-analyzer` or `qa-test-runner` starts its own `npx @playwright/mcp@0.0.78` process — a fully independent Chromium/Firefox/WebKit instance with no shared state.
 
-`/qa-catalog:init` now installs these files to `.claude/agents/` in **Phase 0** before any browser work begins. `/qa-catalog:scan` and `/qa-catalog:sync` include a guard that installs them if missing. All five skills have been updated to reference `Agent(qa-page-analyzer)` and `Agent(qa-test-runner)` (project-scope) instead of `Agent(qa-catalog:page-analyzer)` and `Agent(qa-catalog:test-runner)` (plugin-scope).
+`/qa-my-app:init` now installs these files to `.claude/agents/` in **Phase 0** before any browser work begins. `/qa-my-app:scan` and `/qa-my-app:sync` include a guard that installs them if missing. All five skills have been updated to reference `Agent(qa-page-analyzer)` and `Agent(qa-test-runner)` (project-scope) instead of `Agent(qa-my-app:page-analyzer)` and `Agent(qa-my-app:test-runner)` (plugin-scope).
 
 The `contextId` / `browser_new_context` parameters have been removed from both new agent files and from every skill payload that previously passed them — they are no longer needed since isolation is now at the process level.
 
@@ -715,7 +715,7 @@ These optional fields appear in the `/plugin` picker's plugin detail view and ar
 
 **Source of truth:** [sub-agents → Supported frontmatter fields](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) — `color` accepts `red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cyan`.
 
-During a `/qa-catalog:run-all` with 12 parallel runners, the task panel shows up to 17 simultaneous agent rows (12 test-runners + up to 4 page-analyzers + 1 supervisor). With no color, every row is visually identical — the user cannot distinguish runner types at a glance.
+During a `/qa-my-app:run-all` with 12 parallel runners, the task panel shows up to 17 simultaneous agent rows (12 test-runners + up to 4 page-analyzers + 1 supervisor). With no color, every row is visually identical — the user cannot distinguish runner types at a glance.
 
 **Fix:** Assigned distinct colors across the five agent files:
 
@@ -763,33 +763,33 @@ The `catalog-diff.mjs` script is only useful on fresh session starts (it compare
 
 ---
 
-### F-044 — `skills/init/SKILL.md` body listed `qa-catalog:page-analyzer` after Pass-4 rename {#f-044}
+### F-044 — `skills/init/SKILL.md` body listed `qa-my-app:page-analyzer` after Pass-4 rename {#f-044}
 
 **Severity:** 🟡 Medium · **Status:** ✅ Fixed (Pass 5)
 
-The line-36 instruction told Claude to "use the plugin-namespaced names: `qa-catalog:route-discoverer`, `qa-catalog:page-analyzer`, `qa-catalog:test-author`", but Phase 3 actually dispatches the project-scope `qa-page-analyzer` (installed by Phase 0). Pass 4's rename was incomplete.
+The line-36 instruction told Claude to "use the plugin-namespaced names: `qa-my-app:route-discoverer`, `qa-my-app:page-analyzer`, `qa-my-app:test-author`", but Phase 3 actually dispatches the project-scope `qa-page-analyzer` (installed by Phase 0). Pass 4's rename was incomplete.
 
 **Fix:** Rewrote the instruction to split plugin-scope vs. project-scope explicitly.
 
 ---
 
-### F-045 — `skills/run-all/SKILL.md` body referenced `qa-catalog:test-runner` {#f-045}
+### F-045 — `skills/run-all/SKILL.md` body referenced `qa-my-app:test-runner` {#f-045}
 
 **Severity:** 🟡 Medium · **Status:** ✅ Fixed (Pass 5)
 
-Two body paragraphs (lines 33 and 225) said "hands work off to `qa-catalog:test-runner`" and "All browser work goes through `qa-catalog:test-runner` subagents". The `allowed-tools` declaration and the actual dispatch in Phase 2.3 already used `qa-test-runner` (project-scope).
+Two body paragraphs (lines 33 and 225) said "hands work off to `qa-my-app:test-runner`" and "All browser work goes through `qa-my-app:test-runner` subagents". The `allowed-tools` declaration and the actual dispatch in Phase 2.3 already used `qa-test-runner` (project-scope).
 
 **Fix:** Synced both body references to `qa-test-runner`.
 
 ---
 
-### F-046 — `skills/run/SKILL.md` description referenced `qa-catalog:test-runner` {#f-046}
+### F-046 — `skills/run/SKILL.md` description referenced `qa-my-app:test-runner` {#f-046}
 
 **Severity:** 🟡 Medium · **Status:** ✅ Fixed (Pass 5)
 
 The frontmatter `description` is shown verbatim in the `/plugin` picker and is what Claude reads to match the skill's purpose. The post-Pass-4 reality is project-scope dispatch.
 
-**Fix:** Changed `via the qa-catalog:test-runner subagent` → `via the qa-test-runner subagent (project-level, installed by /qa-catalog:init)`. Also updated the in-skill link from `agents/test-runner.md` (now deleted) to [agents/qa-test-runner.md](../agents/qa-test-runner.md).
+**Fix:** Changed `via the qa-my-app:test-runner subagent` → `via the qa-test-runner subagent (project-level, installed by /qa-my-app:init)`. Also updated the in-skill link from `agents/test-runner.md` (now deleted) to [agents/qa-test-runner.md](../agents/qa-test-runner.md).
 
 ---
 
@@ -804,7 +804,7 @@ After Pass 4 swapped to the project-scope `qa-page-analyzer` / `qa-test-runner`,
 
 No skill's `allowed-tools` declaration or body instruction referenced them. They were dead weight that contradicted the actual workflow and confused anyone browsing `agents/`.
 
-**Fix:** Deleted both files. The active agents are now: `route-discoverer`, `test-author`, `catalog-reconciler` (plugin scope) + `qa-page-analyzer`, `qa-test-runner` (project scope, templates installed by `/qa-catalog:init` Phase 0).
+**Fix:** Deleted both files. The active agents are now: `route-discoverer`, `test-author`, `catalog-reconciler` (plugin scope) + `qa-page-analyzer`, `qa-test-runner` (project scope, templates installed by `/qa-my-app:init` Phase 0).
 
 ---
 
@@ -822,7 +822,7 @@ The original plugin-shipped `agents/page-analyzer.md` (now deleted, F-047) had `
 
 **Severity:** 🟢 Low · **Status:** ✅ Fixed (Pass 5)
 
-The skill prints MCP-add commands (e.g. `claude mcp add ... -- npx -y @playwright/mcp@latest`) as **copy-paste text** for the user to run interactively. The skill itself never invokes `npx`. `Bash(npx *)` in `allowed-tools` was over-broad — granted Claude permission to run any `npx` command from inside the skill body.
+The skill prints MCP-add commands (e.g. `claude mcp add ... -- npx -y @playwright/mcp@0.0.78`) as **copy-paste text** for the user to run interactively. The skill itself never invokes `npx`. `Bash(npx *)` in `allowed-tools` was over-broad — granted Claude permission to run any `npx` command from inside the skill body.
 
 **Fix:** Removed `Bash(npx *)` from `allowed-tools`. `Bash(claude mcp *)` is retained (used in Phase 1 to check what's already connected).
 
@@ -832,7 +832,7 @@ The skill prints MCP-add commands (e.g. `claude mcp add ... -- npx -y @playwrigh
 
 **Severity:** 🟡 Medium · **Status:** ✅ Fixed (Pass 5)
 
-[README.md](../README.md) subagent table (line 271, 273) listed `qa-catalog:page-analyzer` / `qa-catalog:test-runner` and the body text (lines 84, 348, 354) referenced the same. [CONTRIBUTING.md](../CONTRIBUTING.md) layout block claimed `5 plugin-shipped subagents` (post-Pass-4-deletion it's 3 plugin + 2 project-scope templates).
+[README.md](../README.md) subagent table (line 271, 273) listed `qa-my-app:page-analyzer` / `qa-my-app:test-runner` and the body text (lines 84, 348, 354) referenced the same. [CONTRIBUTING.md](../CONTRIBUTING.md) layout block claimed `5 plugin-shipped subagents` (post-Pass-4-deletion it's 3 plugin + 2 project-scope templates).
 
 **Fix:** Rewrote the subagent table to add a Scope column and split plugin-scope vs. project-scope rows. Added the explanatory note about why the browser agents must live at project scope. Updated CONTRIBUTING's layout diagram + namespace rule.
 
@@ -931,7 +931,7 @@ Pass 4 added `email`/`url` to `plugin.json` `author` (F-038) and `email` to mark
 
 Every top community plugin ships slash commands under a `commands/` directory (Anthropic's `code-review`, `commit-commands`, etc.; flow-next's 19-command set under `commands/flow-next/`).
 
-**Why we don't:** Per [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills), plugin **skills** auto-register as `/<plugin-name>:<skill-name>` slash commands. Our 5 skills already give us `/qa-catalog:init`, `/qa-catalog:scan`, `/qa-catalog:sync`, `/qa-catalog:run`, and `/qa-catalog:run-all`. Adding a parallel `commands/` directory would either duplicate the same workflows or shadow the auto-mapped paths — both bad.
+**Why we don't:** Per [plugins-reference → Skills](https://code.claude.com/docs/en/plugins-reference#skills), plugin **skills** auto-register as `/<plugin-name>:<skill-name>` slash commands. Our 5 skills already give us `/qa-my-app:init`, `/qa-my-app:scan`, `/qa-my-app:sync`, `/qa-my-app:run`, and `/qa-my-app:run-all`. Adding a parallel `commands/` directory would either duplicate the same workflows or shadow the auto-mapped paths — both bad.
 
 ---
 
@@ -941,7 +941,7 @@ Every top community plugin ships slash commands under a `commands/` directory (A
 
 Anthropic's `plugin-validator.md` uses three `<example>...<commentary>...</example>` blocks inside the agent description to boost natural-language selection reliability.
 
-**Why we don't:** Every agent in this plugin is spawned by **name** from skill instructions (e.g. `Agent(qa-catalog:test-author)`, `Agent(qa-test-runner)`). Description-matched auto-selection never fires for these agents. The `<example>` blocks would consume frontmatter budget for no behavioral benefit.
+**Why we don't:** Every agent in this plugin is spawned by **name** from skill instructions (e.g. `Agent(qa-my-app:test-author)`, `Agent(qa-test-runner)`). Description-matched auto-selection never fires for these agents. The `<example>` blocks would consume frontmatter budget for no behavioral benefit.
 
 ---
 
@@ -969,9 +969,9 @@ Anthropic's `plugin-dev` skills are the canonical pattern: each skill is a direc
 
 **Severity:** 🟡 Medium · **Status:** ⚠️ Open (deferred to future pass)
 
-Anthropic's `security-guidance` plugin uses `asyncRewake: true` + `rewakeMessage` + `rewakeSummary` on `PostToolUse`/`Stop` hooks to run long-running security reviews in the background and inject findings back into the conversation when complete. The same pattern would let `/qa-catalog:run-all` fire-and-forget: kick off the test fleet, free the user's session, then surface results asynchronously.
+Anthropic's `security-guidance` plugin uses `asyncRewake: true` + `rewakeMessage` + `rewakeSummary` on `PostToolUse`/`Stop` hooks to run long-running security reviews in the background and inject findings back into the conversation when complete. The same pattern would let `/qa-my-app:run-all` fire-and-forget: kick off the test fleet, free the user's session, then surface results asynchronously.
 
-**Why deferred (not adopted now):** The current `/qa-catalog:run-all` supervisor runs synchronously inside one turn and streams per-task results live via the run queue file. Users see progress in real time. Switching to async-rewake is a significant rework (the supervisor's dispatch loop becomes a hook handler; verify/retry semantics need restructuring) for a UX improvement that hasn't been requested. Revisit if users say "I want to kick off the tests and come back to it tomorrow."
+**Why deferred (not adopted now):** The current `/qa-my-app:run-all` supervisor runs synchronously inside one turn and streams per-task results live via the run queue file. Users see progress in real time. Switching to async-rewake is a significant rework (the supervisor's dispatch loop becomes a hook handler; verify/retry semantics need restructuring) for a UX improvement that hasn't been requested. Revisit if users say "I want to kick off the tests and come back to it tomorrow."
 
 ---
 
@@ -1065,7 +1065,7 @@ Re-fetched the latest pages of [hooks](https://code.claude.com/docs/en/hooks), [
 
 | Capability | Docs section | Action |
 |---|---|---|
-| `hookSpecificOutput.additionalContext` on `SessionStart` | [hooks → SessionStart decision control](https://code.claude.com/docs/en/hooks#sessionstart-decision-control) | ✅ Adopted (F-066) — `catalog-diff.mjs --session-start` now emits a JSON envelope so Claude proactively knows the catalog drifted and can suggest `/qa-catalog:sync` |
+| `hookSpecificOutput.additionalContext` on `SessionStart` | [hooks → SessionStart decision control](https://code.claude.com/docs/en/hooks#sessionstart-decision-control) | ✅ Adopted (F-066) — `catalog-diff.mjs --session-start` now emits a JSON envelope so Claude proactively knows the catalog drifted and can suggest `/qa-my-app:sync` |
 | `statusMessage` on hook entries | [hooks → Common fields](https://code.claude.com/docs/en/hooks#common-fields) | ✅ Adopted (F-069) — both `SessionStart` and `PostToolUse` now show a friendly spinner label |
 | `if` permission-rule on hook entries | [hooks → Common fields](https://code.claude.com/docs/en/hooks#common-fields) | ❌ Rejected (F-070) — single-rule limitation forces 6× duplication; fast-path in script already costs <5 ms |
 | `paths` glob on skill frontmatter | [skills → Frontmatter reference](https://code.claude.com/docs/en/skills#frontmatter-reference) | Skip — our skills are slash-only (`disable-model-invocation: true`), not auto-injected |

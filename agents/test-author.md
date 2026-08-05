@@ -1,6 +1,6 @@
 ---
 name: test-author
-description: Converts a Page Analysis JSON into one or more deep, executable QA task markdown files. Output covers happy path + every validation + every modal + every button + edge cases — never smoke tests. Uses an enforced template so /qa-catalog:run can parse and execute the task deterministically.
+description: Converts a Page Analysis JSON into one or more deep, executable QA task markdown files. Output covers happy path + every validation + every modal + every button + edge cases — never smoke tests. Uses an enforced template so /qa-my-app:run can parse and execute the task deterministically.
 tools: Read, Write, Edit, Glob
 model: inherit
 maxTurns: 30
@@ -12,7 +12,7 @@ You are a senior QA engineer. Given a Page Analysis JSON, you author thorough, e
 
 ## Input
 A Page Analysis JSON (see `page-analyzer` output schema). The orchestrator may also pass:
-- `settings.acceptanceCriteria` — a list of acceptance-criterion strings (e.g. pulled from a Jira ticket by `/qa-catalog:verify`). When present, every criterion MUST be covered by at least one TC, and you emit the `## Acceptance criteria` block (see template) mapping each one to the TC(s) that prove it.
+- `settings.acceptanceCriteria` — a list of acceptance-criterion strings (e.g. pulled from a Jira ticket by `/qa-my-app:verify`). When present, every criterion MUST be covered by at least one TC, and you emit the `## Acceptance criteria` block (see template) mapping each one to the TC(s) that prove it.
 - `settings.changedSummary` — a short description of what changed (from the conversation or git diff) when authoring a change-scoped task; bias the happy-path and edge cases toward the changed behavior.
 
 ## Read the source before writing

@@ -13,7 +13,7 @@ mkdir -p "$REPO_ROOT/.git/hooks"
 
 cat > "$HOOK" <<'EOF'
 #!/usr/bin/env bash
-# Auto-installed by qa-catalog Claude Code plugin.
+# Auto-installed by qa-my-app Claude Code plugin.
 # Verifies QA-tests/catalog.json is in sync with staged source files.
 # Bypass with: git commit --no-verify  (not recommended)
 
@@ -26,9 +26,9 @@ PLUGIN_DIR="${QA_CATALOG_PLUGIN_DIR:-}"
 if [ -z "$PLUGIN_DIR" ]; then
   # Try common locations
   for candidate in \
-    "$HOME/.claude/plugins/qa-catalog" \
-    "$HOME/.config/claude/plugins/qa-catalog" \
-    "$(git rev-parse --show-toplevel)/.claude/plugins/qa-catalog"; do
+    "$HOME/.claude/plugins/qa-my-app" \
+    "$HOME/.config/claude/plugins/qa-my-app" \
+    "$(git rev-parse --show-toplevel)/.claude/plugins/qa-my-app"; do
     if [ -f "$candidate/scripts/catalog-diff.mjs" ]; then
       PLUGIN_DIR="$candidate"
       break
@@ -37,7 +37,7 @@ if [ -z "$PLUGIN_DIR" ]; then
 fi
 
 if [ -z "$PLUGIN_DIR" ] || [ ! -f "$PLUGIN_DIR/scripts/catalog-diff.mjs" ]; then
-  echo "[qa-catalog] pre-commit hook installed but plugin scripts not found; skipping."
+  echo "[qa-my-app] pre-commit hook installed but plugin scripts not found; skipping."
   echo "  Set QA_CATALOG_PLUGIN_DIR to the plugin root to enable."
   exit 0
 fi
@@ -46,4 +46,4 @@ node "$PLUGIN_DIR/scripts/catalog-diff.mjs" --precommit
 EOF
 
 chmod +x "$HOOK"
-echo "[qa-catalog] installed pre-commit hook at $HOOK"
+echo "[qa-my-app] installed pre-commit hook at $HOOK"

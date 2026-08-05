@@ -13,7 +13,7 @@ Most "AI testing" tools re-derive *what to test* on every run — slow, non-dete
 
 The catalog is the engine room. You don't have to look at it — but it's why subsequent runs are fast, deterministic, and PR-reviewable.
 
-**Inner loop vs. full suite.** `/qa-catalog:run-all` executes the whole catalog; `/qa-catalog:verify` is the change-scoped counterpart — it resolves what changed (this conversation + the uncommitted diff, a branch/PR range, or a connected ticket's acceptance criteria), re-authors only the affected tasks, and runs them, reporting pass/fail per acceptance criterion.
+**Inner loop vs. full suite.** `/qa-my-app:run-all` executes the whole catalog; `/qa-my-app:verify` is the change-scoped counterpart — it resolves what changed (this conversation + the uncommitted diff, a branch/PR range, or a connected ticket's acceptance criteria), re-authors only the affected tasks, and runs them, reporting pass/fail per acceptance criterion.
 
 ## Catalog model
 
@@ -31,8 +31,8 @@ Because tasks are uniform in shape, the orchestrator can fan them out across N r
 
 | Trigger | Action |
 |---|---|
-| `SessionStart` (`matcher: startup`) | Emits a `hookSpecificOutput.additionalContext` JSON envelope so Claude proactively knows the catalog drifted and can suggest `/qa-catalog:sync` at session boot. |
+| `SessionStart` (`matcher: startup`) | Emits a `hookSpecificOutput.additionalContext` JSON envelope so Claude proactively knows the catalog drifted and can suggest `/qa-my-app:sync` at session boot. |
 | `PostToolUse` after `Write\|Edit\|MultiEdit` (async) | Silent re-check after every file edit. Never blocks the tool loop. |
-| Git `pre-commit` (installed during `/qa-catalog:init`) | Re-fingerprints staged source files. **Blocks the commit** if `QA-tests/catalog.json` is stale and prints the routes that drifted. Bypass with `git commit --no-verify` (not recommended). |
+| Git `pre-commit` (installed during `/qa-my-app:init`) | Re-fingerprints staged source files. **Blocks the commit** if `QA-tests/catalog.json` is stale and prints the routes that drifted. Bypass with `git commit --no-verify` (not recommended). |
 
 Together, these guarantee the catalog never lags behind the UI. The moment a developer edits a page component, Claude knows; the moment they try to commit it, Git knows.

@@ -15,17 +15,17 @@ This is the recommended engine for almost everyone.
 
 ## Configuration
 
-`/qa-catalog:init` writes this `mcpServers` block into each project-level browser agent:
+`/qa-my-app:init` writes this `mcpServers` block into each project-level browser agent:
 
 ```yaml
 mcpServers:
   - playwright:
       type: stdio
       command: npx
-      args: ["-y", "@playwright/mcp@latest"]
+      args: ["-y", "@playwright/mcp@0.0.78"]
 ```
 
-Each parallel spawn starts its **own** `npx @playwright/mcp@latest` process — true OS-process isolation, no shared cookies/`localStorage`. No `browser_new_context` call is needed (or exposed); navigate directly.
+Each parallel spawn starts its **own** `npx @playwright/mcp@0.0.78` process — true OS-process isolation, no shared cookies/`localStorage`. No `browser_new_context` call is needed (or exposed); navigate directly.
 
 ## Relevant settings (`/plugin`)
 

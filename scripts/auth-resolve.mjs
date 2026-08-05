@@ -9,7 +9,7 @@
 //
 // Modes:
 //   --json                  Full role->credential map WITH resolved secrets.
-//                           Consumed by /qa-catalog:init|run|run-all to build the
+//                           Consumed by /qa-my-app:init|run|run-all to build the
 //                           credentialsByRole payload handed to the runner.
 //   --role <name> [--json]  Resolve a single role (falls back to defaultRole,
 //                           then to authMode:none). Used for ad-hoc checks.

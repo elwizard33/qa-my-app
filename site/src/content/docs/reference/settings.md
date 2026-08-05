@@ -10,7 +10,7 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `dev_url` | _empty_ | Override framework-detected dev URL. |
 | `parallel_agents` | `3` | Concurrent `page-analyzer` agents during init/scan/sync (1–12). |
 | `parallel_test_authors` | `4` | Concurrent `test-author` agents during init/scan/sync (1–16). |
-| `parallel_test_runners` | `3` | Concurrent `test-runner` agents during `/qa-catalog:run-all` (1–12). |
+| `parallel_test_runners` | `3` | Concurrent `test-runner` agents during `/qa-my-app:run-all` (1–12). |
 | `browser_engine` | `playwright` | Browser-automation engine: `playwright` (default, all browsers, full fidelity), `chrome-devtools` (Chrome-only, perf + Lighthouse), `stagehand` (Browserbase cloud, AI act/observe/extract — experimental). |
 | `browser_channel` | `chromium` | For `playwright` / `chrome-devtools`: `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. Ignored by `stagehand`. |
 | `browser_headless` | `true` | Set false to watch agents work. Ignored by `stagehand` (cloud is always headless). |

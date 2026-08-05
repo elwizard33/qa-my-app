@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Reports a one-shot health + inventory snapshot for the QA catalog in this project.
-// Read-only. Reused by /qa-catalog:status. Pure stdlib — no dependencies.
+// Read-only. Reused by /qa-my-app:status. Pure stdlib — no dependencies.
 //
 // Modes:
 //   (default)   human-readable status block (OpenWolf-style ✓ receipt)
@@ -134,13 +134,13 @@ out.push("");
 
 out.push("  Browser agents (.claude/agents/):");
 for (const [name, present] of Object.entries(agents)) {
-  out.push(`  ${tick(present)} ${name}.md${present ? "" : "  — run /qa-catalog:init to install"}`);
+  out.push(`  ${tick(present)} ${name}.md${present ? "" : "  — run /qa-my-app:init to install"}`);
 }
 out.push("");
 
 if (!catalogInfo) {
   out.push("  Catalog:");
-  out.push("  ✗ QA-tests/catalog.json missing — run /qa-catalog:init to bootstrap");
+  out.push("  ✗ QA-tests/catalog.json missing — run /qa-my-app:init to bootstrap");
 } else {
   out.push(`  Catalog (v${catalogInfo.version ?? "?"}):`);
   out.push(`  ✓ framework: ${catalogInfo.framework ?? "unknown"}`);
@@ -176,7 +176,7 @@ if (credentials) {
 
 out.push("  Last run:");
 if (!lastRun) {
-  out.push("  - none yet — run /qa-catalog:run-all or /qa-catalog:run <task>");
+  out.push("  - none yet — run /qa-my-app:run-all or /qa-my-app:run <task>");
 } else {
   const t = lastRun.totals ?? {};
   out.push(

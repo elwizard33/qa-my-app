@@ -13,13 +13,16 @@ please follow the process below so review is fast.
 3. **No hardcoded model names.** Every plugin subagent uses `model: inherit`.
    New agents must do the same. Models are user-configurable; never
    string-literal a model id (`claude-opus-4-x`, `gpt-4o`, etc.).
-4. **No breaking the namespace.** The internal plugin `name` is `qa-catalog`.
-   Renaming would break every `Agent(qa-catalog:route-discoverer)` reference,
-   every `/qa-catalog:*` slash command, and every existing install. The
-   user-visible `displayName` is "QA My App"; that's the only brand-level lever.
+4. **No breaking the namespace.** The plugin `name` is `qa-my-app` — matching the
+   repo, the marketplace, and the docs site. Once the plugin is published to the
+   community catalog this slug is **immutable**: Anthropic can only change it via
+   a `renames` map. Renaming would also break every
+   `Agent(qa-my-app:route-discoverer)` reference, every `/qa-my-app:*` slash
+   command, and every existing install. The user-visible `displayName` is
+   "QA My App"; that's the only brand-level lever.
    The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) are
    project-scope, not plugin-namespaced — they live in `agents/` as templates
-   that `/qa-catalog:init` Phase 0 copies into the user's `.claude/agents/`.
+   that `/qa-my-app:init` Phase 0 copies into the user's `.claude/agents/`.
 
 ## Repo layout
 
@@ -30,12 +33,12 @@ please follow the process below so review is fast.
 agents/              # 3 plugin-shipped subagents + 2 project-scope templates
                      # (route-discoverer, test-author, catalog-reconciler are
                      #  plugin-namespaced; qa-page-analyzer + qa-test-runner are
-                     #  copied to .claude/agents/ by /qa-catalog:init Phase 0
+                     #  copied to .claude/agents/ by /qa-my-app:init Phase 0
                      #  so they can declare inline mcpServers)
 skills/              # 7 slash-command skills (init, scan, sync, status, run, run-all, verify)
 hooks/hooks.json     # SessionStart + PostToolUse
 scripts/             # Pure-stdlib Node helpers + the precommit installer
-.mcp.json            # Bundled Playwright MCP (stdio)
+                     # (no .mcp.json — browser MCP is inline on the project-level agents)
 docs/AUDIT.md        # Single living audit log — append Pass N section per audit
 ```
 
@@ -64,15 +67,21 @@ The single living audit log lives at [docs/AUDIT.md](docs/AUDIT.md).
 - **Forbidden frontmatter fields** (rejected by `--strict`): `hooks`,
   `mcpServers`, `permissionMode`. See [F-007 in
   docs/AUDIT.md](docs/AUDIT.md#f-007).
-- Reference the agent from a skill as `Agent(qa-catalog:<name>)` — the plugin
+- Reference the agent from a skill as `Agent(qa-my-app:<name>)` — the plugin
   namespace prefix is mandatory.
 
 ## Adding a skill
 
 - Place under `skills/<name>/SKILL.md`.
-- Frontmatter requirements: `description`, `disable-model-invocation: true`
-  (workflow skills only run when the user types `/qa-catalog:<name>`, never
-  auto-invoked).
+- Frontmatter requirements: `description`, plus `when_to_use` when the skill is
+  model-invocable.
+- **Invocation policy.** Any skill that overwrites the catalog or spawns a browser
+  run (`init`, `scan`, `sync`, `run`, `run-all`) must set
+  `disable-model-invocation: true` — Claude should never start a costly or
+  destructive run on its own. Read-only or inner-loop skills (`status`, `verify`)
+  omit it so Claude can trigger them from natural phrasing. Note that
+  `disable-model-invocation: true` also keeps the `description` out of context
+  entirely, so a `when_to_use` block on such a skill is inert.
 - Skill name is derived from the directory; do not set `name:`.
 
 ## Adding a hook

@@ -4,7 +4,7 @@
 
 ## Repo identity
 
-- **Plugin internal name:** `qa-catalog` (do not rename — every `Agent(qa-catalog:*)` reference, every `/qa-catalog:*` slash command, and every existing install depends on it).
+- **Plugin internal name:** `qa-my-app` (do not rename — every `Agent(qa-my-app:*)` reference, every `/qa-my-app:*` slash command, and every existing install depends on it).
 - **User-visible brand:** "QA My App" (set via `displayName` in `.claude-plugin/plugin.json`).
 - **Single living audit log:** [docs/AUDIT.md](docs/AUDIT.md). Append a new "Pass N" section per audit. `F-NNN` finding ids are stable forever.
 
@@ -16,17 +16,17 @@
 | `.claude-plugin/marketplace.json` | Self-marketplace catalog so users can `/plugin marketplace add elwizard33/qa-my-app`. | marketplace |
 | `agents/route-discoverer.md` | Static route discovery from source. | plugin subagent |
 | `agents/test-author.md` | Page-analysis JSON → task markdown. | plugin subagent |
-| `agents/catalog-reconciler.md` | Drift planner for `/qa-catalog:sync`. | plugin subagent |
-| `agents/qa-page-analyzer.md` | Browser-driving element inventory. Each spawn starts its own `npx @playwright/mcp@latest` process. | **project** (copied to `.claude/agents/` by `/qa-catalog:init` Phase 0) |
+| `agents/catalog-reconciler.md` | Drift planner for `/qa-my-app:sync`. | plugin subagent |
+| `agents/qa-page-analyzer.md` | Browser-driving element inventory. Each spawn starts its own `npx @playwright/mcp@0.0.78` process. | **project** (copied to `.claude/agents/` by `/qa-my-app:init` Phase 0) |
 | `agents/qa-test-runner.md` | Browser-driving task execution → `result.md` + screenshots. | **project** (same as above) |
-| `skills/{init,scan,sync,run,run-all,status,verify}/SKILL.md` | Slash commands `/qa-catalog:*`. `verify` is the change/ticket-scoped inner loop. | plugin skill |
+| `skills/{init,scan,sync,run,run-all,status,verify}/SKILL.md` | Slash commands `/qa-my-app:*`. `verify` is the change/ticket-scoped inner loop. | plugin skill |
 | `hooks/hooks.json` | `SessionStart` (matcher: `startup`) catalog diff + async `PostToolUse` matcher on `Write\|Edit\|MultiEdit`. | plugin hook |
 | `scripts/*.mjs`, `scripts/*.sh` | Pure-stdlib Node helpers + Bash precommit installer. Invoked via `node ${CLAUDE_PLUGIN_ROOT}/scripts/...`. | plugin scripts |
-| `.mcp.json` | Bundled Playwright MCP (stdio). Available in the main session and to plugin subagents. | plugin MCP |
+| _(no `.mcp.json`)_ | Intentionally absent. The browser MCP is declared inline on the project-level browser agents so it never loads into the main conversation. | — |
 
 ## Hard rules (enforced by reviewers + CI)
 
-1. **Plugin subagents must NOT declare `hooks`, `mcpServers`, or `permissionMode`.** Silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) live at project scope because they need inline `mcpServers`. **They must NOT be auto-loaded as plugin agents** — `plugin.json` declares an explicit `agents` allowlist (`route-discoverer`, `test-author`, `catalog-reconciler` only) so the two browser agents in `agents/` are treated purely as copy-templates, not registered as `qa-catalog:*` agents. If you add a new *plugin-scope* agent, add it to that allowlist too, or it won't load.
+1. **Plugin subagents must NOT declare `hooks`, `mcpServers`, or `permissionMode`.** Silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) live at project scope because they need inline `mcpServers`. **They must NOT be auto-loaded as plugin agents** — `plugin.json` declares an explicit `agents` allowlist (`route-discoverer`, `test-author`, `catalog-reconciler` only) so the two browser agents in `agents/` are treated purely as copy-templates, not registered as `qa-my-app:*` agents. If you add a new *plugin-scope* agent, add it to that allowlist too, or it won't load.
 2. **`model: inherit` everywhere.** No agent hardcodes a model id. The user's session model is honored. **`effort` is the cost knob, not `model`.** Tune `effort` per agent by how much reasoning the task genuinely needs — reasoning-heavy agents that infer intent from source (`qa-page-analyzer`) keep `effort: high`; deterministic executors that follow a pre-authored task verbatim (`qa-test-runner`) use `effort: medium` to avoid spending extended-thinking output tokens (multiplied across every parallel spawn). Do not raise an agent's `effort` without a reasoning justification.
 3. **`disable-model-invocation: true` on every workflow skill.** Slash-only entry; Claude cannot auto-trigger them.
 4. **Path portability.** Every script reference uses `${CLAUDE_PLUGIN_ROOT}`. No absolute paths.
@@ -39,9 +39,9 @@
 
 ## Agent selection convention
 
-Plugin-scope spawn ids use the namespace: `Agent(qa-catalog:route-discoverer)`, `Agent(qa-catalog:test-author)`, `Agent(qa-catalog:catalog-reconciler)`.
+Plugin-scope spawn ids use the namespace: `Agent(qa-my-app:route-discoverer)`, `Agent(qa-my-app:test-author)`, `Agent(qa-my-app:catalog-reconciler)`.
 
-Project-scope (browser) spawn ids drop the namespace: `Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`. They are installed into the user's `.claude/agents/` by `/qa-catalog:init` Phase 0 and **must** be committed by the user so the whole team shares the same browser-agent versions.
+Project-scope (browser) spawn ids drop the namespace: `Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`. They are installed into the user's `.claude/agents/` by `/qa-my-app:init` Phase 0 and **must** be committed by the user so the whole team shares the same browser-agent versions.
 
 ## Color coding (agent task panel)
 
@@ -53,7 +53,7 @@ Project-scope (browser) spawn ids drop the namespace: `Agent(qa-page-analyzer)`,
 | `qa-test-runner` | orange |
 | `catalog-reconciler` | purple |
 
-With up to 12 parallel runners + 4 analyzers + 1 supervisor visible during `/qa-catalog:run-all`, color is the only way the user can tell which row is which kind of work.
+With up to 12 parallel runners + 4 analyzers + 1 supervisor visible during `/qa-my-app:run-all`, color is the only way the user can tell which row is which kind of work.
 
 ## Where to look first
 

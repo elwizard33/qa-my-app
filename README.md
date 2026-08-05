@@ -19,7 +19,7 @@
 ## Contents
 
 - [Install](#install) · [Quickstart](#quickstart) · [When to use it](#when-to-use-qa-my-app)
-- [The task catalog](#the-task-catalog-how-qa-my-app-keeps-runs-deterministic) · [What `/qa-catalog:init` does](#what-happens-during-qa-cataloginit) · [Issue trackers](#connecting-issue-trackers-github--jira--azure-devops)
+- [The task catalog](#the-task-catalog-how-qa-my-app-keeps-runs-deterministic) · [What `/qa-my-app:init` does](#what-happens-during-qa-my-appinit) · [Issue trackers](#connecting-issue-trackers-github--jira--azure-devops)
 - [Generated layout](#generated-layout-in-the-target-project) · [Architecture](#architecture) · [Subagents](#subagents) · [Frameworks](#supported-frameworks)
 - [Settings](#settings-userconfig) · [Browser engines](#browser-engines) · [Customization](#customization) · [Compliance](#claude-code-compliance-notes)
 - [Status](#status) · [Changelog](CHANGELOG.md) · [Audit log](docs/AUDIT.md) · [Architecture deep-dive](docs/ARCHITECTURE.md)
@@ -68,8 +68,8 @@ The catalog is the engine room. You don't have to look at it — but it's why su
 2. **Discover every route** statically from the source tree, with auth/role/guard/HTTP-method metadata.
 3. **Open each page** in a real browser via the configured browser engine (Playwright by default) and inventory every form field, validator, button, modal, dialog, tab, and table.
 4. **Author deep test tasks** into `QA-tests/tasks/` using an enforced template — happy path + validation matrix + modal coverage + button coverage + edge cases.
-5. **Watch the codebase** via SessionStart + PostToolUse hooks and a Git pre-commit hook. When a route's source drifts from the catalog, you're nudged (or commits are blocked) until you run `/qa-catalog:sync`.
-6. **Run one task, a subset, or every task in parallel** with `/qa-catalog:run` / `/qa-catalog:run-all`. Each spawn writes a date-stamped `result.md` with embedded screenshots, plus a top-level run summary and an append-only history index.
+5. **Watch the codebase** via SessionStart + PostToolUse hooks and a Git pre-commit hook. When a route's source drifts from the catalog, you're nudged (or commits are blocked) until you run `/qa-my-app:sync`.
+6. **Run one task, a subset, or every task in parallel** with `/qa-my-app:run` / `/qa-my-app:run-all`. Each spawn writes a date-stamped `result.md` with embedded screenshots, plus a top-level run summary and an append-only history index.
 
 This plugin is project-agnostic — no app-specific assumptions.
 
@@ -81,7 +81,7 @@ Inside Claude Code in any project:
 
 ```text
 /plugin marketplace add elwizard33/qa-my-app
-/plugin install qa-catalog@qa-my-app
+/plugin install qa-my-app@qa-my-app
 /reload-plugins
 ```
 
@@ -91,7 +91,7 @@ That's it — the plugin is installed at **user scope** (available in every repo
 <summary><b>What the three commands do, and project-scope install</b></summary>
 
 1. `/plugin marketplace add <owner/repo>` registers this repo's `marketplace.json` with your Claude Code install. No plugins installed yet — Claude Code just knows the catalog exists. ([docs](https://code.claude.com/docs/en/discover-plugins#add-marketplaces))
-2. `/plugin install qa-catalog@qa-my-app` installs the `qa-catalog` plugin from the `qa-my-app` marketplace at **user scope** by default. To install at project scope so teammates pick it up automatically, run `/plugin` instead and press Enter on **qa-catalog** in the Discover tab — you'll get scope options. ([docs](https://code.claude.com/docs/en/discover-plugins#install-plugins))
+2. `/plugin install qa-my-app@qa-my-app` installs the `qa-my-app` plugin from the `qa-my-app` marketplace at **user scope** by default. To install at project scope so teammates pick it up automatically, run `/plugin` instead and press Enter on **qa-my-app** in the Discover tab — you'll get scope options. ([docs](https://code.claude.com/docs/en/discover-plugins#install-plugins))
 3. `/reload-plugins` activates the new plugin without restarting Claude Code.
 
 Verify it loaded by opening the plugin manager with `/plugin` and looking at the **Installed** tab — you should see **QA My App** with skills `init`, `scan`, `sync`, `status`, `run`, `run-all`, `verify`. Errors (if any) show up under the **Errors** tab.
@@ -111,9 +111,9 @@ The local copy takes precedence over any installed marketplace version for that 
 
 </details>
 
-> **Browser engine.** This plugin is browser-engine agnostic. `.mcp.json` declares a plugin-scoped **Playwright** MCP (stdio, `npx @playwright/mcp@latest`) for the main session. The project-level browser agents (`qa-page-analyzer`, `qa-test-runner`) declare their **own** inline `mcpServers` so every parallel spawn gets a dedicated browser process — that's why `/qa-catalog:init` Phase 0 copies them into `.claude/agents/`. Set `browser_engine` to `playwright` (default), `chrome-devtools`, or `stagehand` and init writes the matching block. See [docs/browsers/](docs/browsers/README.md).
+> **Browser engine.** This plugin is browser-engine agnostic. It ships **no session-level MCP server** — the project-level browser agents (`qa-page-analyzer`, `qa-test-runner`) each declare their **own** inline `mcpServers` block, so every parallel spawn gets a dedicated browser process and the main conversation never pays for the browser tool descriptions. That's why `/qa-my-app:init` Phase 0 copies those agents into `.claude/agents/` (plugin-scoped agents ignore `mcpServers` for security reasons; project-scoped ones honor it). Set `browser_engine` to `playwright` (default), `chrome-devtools`, or `stagehand` and init writes the matching block. See [docs/browsers/](docs/browsers/README.md).
 
-> Slash commands are exposed under the `qa-catalog:` namespace (that's the plugin's internal id) — e.g. `/qa-catalog:run-all`. The brand is QA My App; the namespace is a Claude Code plumbing detail.
+> Slash commands are exposed under the `qa-my-app:` namespace (that's the plugin's internal id) — e.g. `/qa-my-app:run-all`. The brand is QA My App; the namespace is a Claude Code plumbing detail.
 
 > **Token efficiency (by design).** Heavy work is isolated so it never floods the main conversation: each browser agent runs in its own context window and returns only a one-line JSON summary, verbose verification is offloaded to the `verify-result.mjs` / `catalog-diff.mjs` Node scripts (a hook, not the model, does the parsing), and the deterministic `qa-test-runner` uses `effort: medium` so extended-thinking tokens aren't spent re-deriving a pre-authored task — multiplied across every parallel runner. Reasoning-heavy analysis (`qa-page-analyzer`) keeps `effort: high`. Slash skills use `disable-model-invocation: true`, so their descriptions stay out of context until you invoke them. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -122,28 +122,28 @@ The local copy takes precedence over any installed marketplace version for that 
 ## Quickstart
 
 ```text
-/qa-catalog:init                 # First-time bootstrap; builds QA-tests/
-/qa-catalog:status               # Health + inventory snapshot (read-only)
-/qa-catalog:sync                 # After code changes, reconcile catalog
-/qa-catalog:scan                 # Force full rescan (backs up tasks first)
-/qa-catalog:run T03              # Execute one task end-to-end
-/qa-catalog:run-all              # Execute every task — parallel runners
-/qa-catalog:run-all T01,T03,T07  # Subset by task id
-/qa-catalog:run-all /customers   # Subset by route prefix
-/qa-catalog:run-all failed       # Re-run only tasks whose last result was FAIL/BLOCKED
-/qa-catalog:run-all changed      # Re-run only tasks whose route source is dirty
+/qa-my-app:init                 # First-time bootstrap; builds QA-tests/
+/qa-my-app:status               # Health + inventory snapshot (read-only)
+/qa-my-app:sync                 # After code changes, reconcile catalog
+/qa-my-app:scan                 # Force full rescan (backs up tasks first)
+/qa-my-app:run T03              # Execute one task end-to-end
+/qa-my-app:run-all              # Execute every task — parallel runners
+/qa-my-app:run-all T01,T03,T07  # Subset by task id
+/qa-my-app:run-all /customers   # Subset by route prefix
+/qa-my-app:run-all failed       # Re-run only tasks whose last result was FAIL/BLOCKED
+/qa-my-app:run-all changed      # Re-run only tasks whose route source is dirty
 
-/qa-catalog:verify               # Test just what changed (this conversation + uncommitted diff)
-/qa-catalog:verify PROJ-123      # Test against a Jira/issue ticket's acceptance criteria
-/qa-catalog:verify --branch      # Verify the whole PR (everything different from main)
-/qa-catalog:verify /customers    # Verify one route right now
+/qa-my-app:verify               # Test just what changed (this conversation + uncommitted diff)
+/qa-my-app:verify PROJ-123      # Test against a Jira/issue ticket's acceptance criteria
+/qa-my-app:verify --branch      # Verify the whole PR (everything different from main)
+/qa-my-app:verify /customers    # Verify one route right now
 ```
 
-Every `/qa-catalog:run`, `/qa-catalog:run-all`, or `/qa-catalog:verify` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, the auto-refresh disables itself and the same file becomes the canonical browse view for that run.
+Every `/qa-my-app:run`, `/qa-my-app:run-all`, or `/qa-my-app:verify` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, the auto-refresh disables itself and the same file becomes the canonical browse view for that run.
 
 ---
 
-## What happens during `/qa-catalog:init`
+## What happens during `/qa-my-app:init`
 
 The init skill is the orchestrator. It runs in your main Claude Code session and fans work out to specialised subagents per the canonical Claude Code pattern ([sub-agents docs](https://code.claude.com/docs/en/sub-agents) — parallel research with focused workers reporting back). Phases are sequenced because each one depends on the previous, but the page-analysis and task-author phases parallelize internally.
 
@@ -152,14 +152,14 @@ The init skill is the orchestrator. It runs in your main Claude Code session and
 | **_pre-amble_** Stack & framework detection | `scripts/detect-framework.mjs` (invoked in the skill's `## Project context`) | Detects framework, languages, runtime, package manager, build tool, monorepo flavor, UI libraries, state management, forms, validation libs, HTTP layer, styling, existing test/E2E frameworks. The full descriptor is persisted into `catalog.json.stack` at Phase 5. | seconds |
 | **0. Install project-level browser agents** | main session | Copies `agents/qa-page-analyzer.md` and `agents/qa-test-runner.md` from the plugin into the project's `.claude/agents/` directory (left untouched if the user has customised them), and writes the `mcpServers` block for the selected `browser_engine`. These two agents declare inline `mcpServers` — a capability silently ignored on plugin-shipped agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent), so they must live at project scope for every parallel spawn to get its own browser process. Commit them so the whole team shares the same browser-agent versions. | seconds |
 | **1. Issue-tracker MCPs** | main session + `AskUserQuestion` | Detects existing MCP connections via `claude mcp list`, then asks (multi-select) whether to wire up **GitHub**, **Jira (Atlassian)**, or **Azure DevOps**. Prints the exact `claude mcp add` commands for the ones you pick — OAuth/PATs happen in your browser, never in the transcript. Skippable. | seconds |
-| **2. Route discovery** | `qa-catalog:route-discoverer` (1×) | Walks the source tree, returns rich JSON per route: path, source file, requiresAuth, rolesAllowed, guards, httpMethods, dynamicParams, layoutChain, featureFlags. | tens of seconds |
+| **2. Route discovery** | `qa-my-app:route-discoverer` (1×) | Walks the source tree, returns rich JSON per route: path, source file, requiresAuth, rolesAllowed, guards, httpMethods, dynamicParams, layoutChain, featureFlags. | tens of seconds |
 | **3. Per-page deep analysis** | `qa-page-analyzer` (× `parallel_agents`, project-level) | Each instance starts its own dedicated browser process (engine per `browser_engine`) — true isolation, no shared cookies / localStorage. Navigates one route, reads the source for validation rules, drives every form/modal/button/dialog/tab/table read-only, captures console + network. Returns a deep element-inventory JSON. | minutes — dominant cost |
-| **4. Task authoring** | `qa-catalog:test-author` (× `parallel_test_authors`) | Pure markdown. Converts each Page Analysis into one or more `QA-tests/tasks/T*.md` files using the enforced template (happy path + validation matrix + modal + button + edge cases). | tens of seconds |
+| **4. Task authoring** | `qa-my-app:test-author` (× `parallel_test_authors`) | Pure markdown. Converts each Page Analysis into one or more `QA-tests/tasks/T*.md` files using the enforced template (happy path + validation matrix + modal + button + edge cases). | tens of seconds |
 | **5. Catalog write** | main session | Writes `catalog.json` (with `stack` + `integrations` blocks), `catalog.md`, `routes/*.md`, `.qa-catalog/fingerprints.json`. | seconds |
 | **6. Pre-commit hook install** | `scripts/install-precommit.sh` | Drops a Git pre-commit hook that re-fingerprints staged source files and blocks the commit if the catalog is stale. | seconds |
-| **7. Summary receipt** | main session | Prints a **✓ checklist receipt** of everything created — framework + dev URL, routes discovered (protected / role-restricted), tasks authored, browser engine, catalog files, fingerprints recorded, issue trackers, and the pre-commit guard — then points you at `/qa-catalog:run-all` and `/qa-catalog:status`. | seconds |
+| **7. Summary receipt** | main session | Prints a **✓ checklist receipt** of everything created — framework + dev URL, routes discovered (protected / role-restricted), tasks authored, browser engine, catalog files, fingerprints recorded, issue trackers, and the pre-commit guard — then points you at `/qa-my-app:run-all` and `/qa-my-app:status`. | seconds |
 
-> ⚠️ **The first run takes longer.** Phase 3 opens every discovered route in a real browser, one batch at a time (`parallel_agents` wide). For a typical 30-route SPA, expect **5–20 minutes** on first run depending on dev-server warm-up, network latency, auth-wall handling, and how much validation probing each page needs. **Subsequent runs are incremental:** `/qa-catalog:sync` only re-analyses routes whose source fingerprint changed.
+> ⚠️ **The first run takes longer.** Phase 3 opens every discovered route in a real browser, one batch at a time (`parallel_agents` wide). For a typical 30-route SPA, expect **5–20 minutes** on first run depending on dev-server warm-up, network latency, auth-wall handling, and how much validation probing each page needs. **Subsequent runs are incremental:** `/qa-my-app:sync` only re-analyses routes whose source fingerprint changed.
 
 Don't kill the session mid-init — the test-author phase writes files as analyses complete, so a partial init still produces partially-usable tasks, but the catalog won't be finalised until Phase 5.
 
@@ -216,7 +216,7 @@ QA-tests/
 │   │   └── T03-customers-edit/
 │   │       └── latest.json            # pointer to most recent run that included this task
 │   └── runs/
-│       └── 2026-05-28T14-22-11Z/      # one folder per /qa-catalog:run[-all] invocation
+│       └── 2026-05-28T14-22-11Z/      # one folder per /qa-my-app:run[-all] invocation
 │           ├── run.json               # run metadata + settings snapshot
 │           ├── task-queue.json        # live task index (run-all only — source of truth during the run)
 │           ├── report.html            # self-contained, auto-refreshing dashboard (open in a browser)
@@ -230,7 +230,7 @@ QA-tests/
 │               └── ...
 └── .qa-catalog/
     ├── fingerprints.json              # sha256 per analyzed source file
-    └── backup-20251108-1530/          # created by /qa-catalog:scan before overwrite
+    └── backup-20251108-1530/          # created by /qa-my-app:scan before overwrite
 ```
 
 </details>
@@ -296,11 +296,11 @@ This is parsed by [scripts/results-index.mjs](scripts/results-index.mjs) to main
 
 ```mermaid
 flowchart TD
-    Init["/qa-catalog:init"] --> RD[route-discoverer<br/>AST / grep]
+    Init["/qa-my-app:init"] --> RD[route-discoverer<br/>AST / grep]
     RD --> PA[page-analyzer ×N<br/>Playwright MCP<br/>isolated browser]
     PA --> TA[test-author ×M<br/>enforced template]
     TA --> Catalog[(QA-tests/<br/>catalog.json + tasks/T*.md<br/>+ .qa-catalog/fingerprints.json)]
-    Catalog --> Run["/qa-catalog:run-all"]
+    Catalog --> Run["/qa-my-app:run-all"]
     Run --> Runners[test-runner ×N<br/>parallel, isolated browser each]
     Runners --> Results[(QA-tests/results/runs/&lt;runId&gt;/<br/>run.json · task-queue.json<br/>report.html · summary.md<br/>&lt;taskId&gt;/result.md + screenshots)]
     Results --> History[(history.json · latest.json<br/>by-task/*/latest.json)]
@@ -312,9 +312,9 @@ For the full component breakdown (every script, every agent, every hook, why eac
 
 | Trigger | Action |
 |---|---|
-| `SessionStart` (Claude hook, `matcher: startup`) | `catalog-diff.mjs --session-start` emits a `hookSpecificOutput.additionalContext` JSON envelope so Claude proactively knows the catalog drifted and can suggest `/qa-catalog:sync`. Status message shown to the user: "qa-catalog: checking drift". |
-| `PostToolUse` after `Write\|Edit\|MultiEdit` (Claude hook, async) | Silent re-check after every file edit. Never blocks the tool loop. Status message: "qa-catalog: drift check". |
-| Git `pre-commit` hook (installed by `scripts/install-precommit.sh` during `/qa-catalog:init`) | Re-fingerprints staged source files. **Blocks the commit** if `QA-tests/catalog.json` is stale and prints the routes that drifted. Bypass with `git commit --no-verify` (not recommended). |
+| `SessionStart` (Claude hook, `matcher: startup`) | `catalog-diff.mjs --session-start` emits a `hookSpecificOutput.additionalContext` JSON envelope so Claude proactively knows the catalog drifted and can suggest `/qa-my-app:sync`. Status message shown to the user: "qa-my-app: checking drift". |
+| `PostToolUse` after `Write\|Edit\|MultiEdit` (Claude hook, async) | Silent re-check after every file edit. Never blocks the tool loop. Status message: "qa-my-app: drift check". |
+| Git `pre-commit` hook (installed by `scripts/install-precommit.sh` during `/qa-my-app:init`) | Re-fingerprints staged source files. **Blocks the commit** if `QA-tests/catalog.json` is stale and prints the routes that drifted. Bypass with `git commit --no-verify` (not recommended). |
 
 Together, these guarantee the catalog never lags behind the UI. The moment a developer edits a page component, Claude knows; the moment they try to commit it, Git knows.
 
@@ -324,13 +324,13 @@ Together, these guarantee the catalog never lags behind the UI. The moment a dev
 
 | Agent | Scope | Purpose | Tools |
 |---|---|---|---|
-| `qa-catalog:route-discoverer` | plugin | Static route discovery + rich metadata (auth, roles, guards, HTTP methods, dynamic params, layout chain, feature flags). | `Read, Grep, Glob, Bash` |
-| `qa-page-analyzer` | **project** (installed by `/qa-catalog:init`) | Browser-driving deep element inventory per route. Each spawn starts its own `npx @playwright/mcp@latest` process — true process isolation, no shared state between parallel runs. | inherits all except `Write`, `Edit`, `MultiEdit`, and destructive Bash patterns (`rm -rf *`, `git push *`, `git reset --hard *`, `npm publish *`) |
-| `qa-catalog:test-author` | plugin | Pure markdown — converts page analysis into task files using the enforced template. | `Read, Write, Edit, Glob` |
-| `qa-test-runner` | **project** (installed by `/qa-catalog:init`) | Browser-driving execution of one task → date-stamped `result.md` with embedded screenshots. Designed for parallel fan-out, one isolated browser per runner. | inherits all except destructive Bash patterns (`rm -rf *`, `git push *`, `git reset --hard *`, `git commit *`, `npm publish *`) |
-| `qa-catalog:catalog-reconciler` | plugin | Plans add/update/delete for `catalog.json` from the drift report. | `Read, Grep, Glob` |
+| `qa-my-app:route-discoverer` | plugin | Static route discovery + rich metadata (auth, roles, guards, HTTP methods, dynamic params, layout chain, feature flags). | `Read, Grep, Glob, Bash` |
+| `qa-page-analyzer` | **project** (installed by `/qa-my-app:init`) | Browser-driving deep element inventory per route. Each spawn starts its own `npx @playwright/mcp@0.0.78` process — true process isolation, no shared state between parallel runs. | inherits all except `Write`, `Edit`, `MultiEdit`, and destructive Bash patterns (`rm -rf *`, `git push *`, `git reset --hard *`, `npm publish *`) |
+| `qa-my-app:test-author` | plugin | Pure markdown — converts page analysis into task files using the enforced template. | `Read, Write, Edit, Glob` |
+| `qa-test-runner` | **project** (installed by `/qa-my-app:init`) | Browser-driving execution of one task → date-stamped `result.md` with embedded screenshots. Designed for parallel fan-out, one isolated browser per runner. | inherits all except destructive Bash patterns (`rm -rf *`, `git push *`, `git reset --hard *`, `git commit *`, `npm publish *`) |
+| `qa-my-app:catalog-reconciler` | plugin | Plans add/update/delete for `catalog.json` from the drift report. | `Read, Grep, Glob` |
 
-> The two browser-driving agents live at project scope because plugin-shipped subagents cannot declare inline `mcpServers` (silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). `/qa-catalog:init` Phase 0 copies them into `.claude/agents/` so every parallel spawn gets its own dedicated Playwright process. Commit them so the whole team shares the same browser-agent versions.
+> The two browser-driving agents live at project scope because plugin-shipped subagents cannot declare inline `mcpServers` (silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). `/qa-my-app:init` Phase 0 copies them into `.claude/agents/` so every parallel spawn gets its own dedicated Playwright process. Commit them so the whole team shares the same browser-agent versions.
 
 All agents are `model: inherit` — they use whatever model your session is on. No model is hardcoded.
 
@@ -364,7 +364,7 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `dev_url` | _empty_ | Override framework-detected dev URL. |
 | `parallel_agents` | `3` | Concurrent `page-analyzer` agents during init/scan/sync (1–12). |
 | `parallel_test_authors` | `4` | Concurrent `test-author` agents during init/scan/sync (1–16). |
-| `parallel_test_runners` | `3` | Concurrent `test-runner` agents during `/qa-catalog:run-all` (1–12). |
+| `parallel_test_runners` | `3` | Concurrent `test-runner` agents during `/qa-my-app:run-all` (1–12). |
 | `browser_engine` | `playwright` | Browser-automation engine the browser agents drive: `playwright` (default, all browsers, full fidelity), `chrome-devtools` (Chrome-only, perf + Lighthouse), `stagehand` (Browserbase cloud, AI act/observe/extract — experimental). See [docs/browsers/](docs/browsers/README.md). |
 | `browser_channel` | `chromium` | For `playwright` / `chrome-devtools`: `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. Ignored by `stagehand`. |
 | `browser_headless` | `true` | Set false to watch agents work. Ignored by `stagehand` (cloud is always headless). |
@@ -384,7 +384,7 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 
 ## Browser engines
 
-QA My App is **browser-engine agnostic**. The two browser-driving agents talk to a browser through an MCP server declared inline in their frontmatter, so swapping that one block swaps the engine. Pick one with the `browser_engine` setting; `/qa-catalog:init` (and `/qa-catalog:sync`) writes the matching `mcpServers` block into `.claude/agents/`.
+QA My App is **browser-engine agnostic**. The two browser-driving agents talk to a browser through an MCP server declared inline in their frontmatter, so swapping that one block swaps the engine. Pick one with the `browser_engine` setting; `/qa-my-app:init` (and `/qa-my-app:sync`) writes the matching `mcpServers` block into `.claude/agents/`.
 
 | Engine (`browser_engine`) | MCP server | Browsers | Runs where | Best for |
 |---|---|---|---|---|
@@ -392,7 +392,7 @@ QA My App is **browser-engine agnostic**. The two browser-driving agents talk to
 | `chrome-devtools` | `chrome-devtools-mcp` | Chrome / Chrome for Testing only | Local process per spawn | DevTools-grade performance traces, Lighthouse audits, deep network + console. |
 | `stagehand` | Browserbase MCP (Stagehand) | Cloud (Browserbase) | Remote session per spawn | AI-driven `act` / `observe` / `extract`, no local browser. **Experimental** — limited screenshot/console/network capture. |
 
-**To switch engines:** set `browser_engine` in `/plugin`, then re-run `/qa-catalog:init` (or edit the `mcpServers:` block in your project's `.claude/agents/qa-page-analyzer.md` and `qa-test-runner.md` and commit). Full per-engine setup, requirements, and caveats live in **[docs/browsers/](docs/browsers/README.md)**:
+**To switch engines:** set `browser_engine` in `/plugin`, then re-run `/qa-my-app:init` (or edit the `mcpServers:` block in your project's `.claude/agents/qa-page-analyzer.md` and `qa-test-runner.md` and commit). Full per-engine setup, requirements, and caveats live in **[docs/browsers/](docs/browsers/README.md)**:
 
 - [Playwright (default)](docs/browsers/playwright.md)
 - [Chrome DevTools](docs/browsers/chrome-devtools.md)
@@ -414,7 +414,7 @@ QA My App is **browser-engine agnostic**. The two browser-driving agents talk to
 | Change parallel batch sizes | `/plugin` → `parallel_agents` / `parallel_test_authors` / `parallel_test_runners` |
 | Switch task depth | `/plugin` → `task_depth` |
 | Disable a Claude hook | edit [hooks/hooks.json](hooks/hooks.json) |
-| Disable the Git pre-commit guard | `rm .git/hooks/pre-commit` (re-installs on next `/qa-catalog:init`) |
+| Disable the Git pre-commit guard | `rm .git/hooks/pre-commit` (re-installs on next `/qa-my-app:init`) |
 
 ---
 
@@ -423,12 +423,12 @@ QA My App is **browser-engine agnostic**. The two browser-driving agents talk to
 The plugin is validated against the published Claude Code contract (manifest, skill, sub-agent, hook references). Verified properties:
 
 - Validation passes in both modes CI runs: `claude plugin validate .` checks `marketplace.json` (schema, duplicate names, source-path traversal, version match), and `claude plugin validate ./.claude-plugin/plugin.json` checks the plugin manifest. Both run with `--strict` in CI (or equivalently via `npx -y @anthropic-ai/claude-code plugin validate …` from a clean shell without a global `claude` install).
-- Self-marketplace: `.claude-plugin/marketplace.json` follows the documented [marketplace schema](https://code.claude.com/docs/en/plugin-marketplaces) so the same repo is both the plugin source and a one-plugin catalog. Users install via `/plugin marketplace add elwizard33/qa-my-app` + `/plugin install qa-catalog@qa-my-app` — the canonical flow ([docs](https://code.claude.com/docs/en/discover-plugins)).
+- Self-marketplace: `.claude-plugin/marketplace.json` follows the documented [marketplace schema](https://code.claude.com/docs/en/plugin-marketplaces) so the same repo is both the plugin source and a one-plugin catalog. Users install via `/plugin marketplace add elwizard33/qa-my-app` + `/plugin install qa-my-app@qa-my-app` — the canonical flow ([docs](https://code.claude.com/docs/en/discover-plugins)).
 - **Orchestration follows the canonical "parallel research" pattern** from the [sub-agents docs](https://code.claude.com/docs/en/sub-agents): main session = supervisor, focused subagents run in parallel and report results back. Agent teams ([docs](https://code.claude.com/docs/en/agent-teams)) were considered and rejected — they're flagged experimental, require an env-flag opt-in, and the split-pane mode needs tmux or iTerm2 ("isn’t supported in VS Code’s integrated terminal, Windows Terminal, or Ghostty"). For uniform, non-conversational work like "drive each route and write a result.md" the subagent fan-out gives the same parallelism at a fraction of the token cost and zero environmental dependencies.
 - All subagents use `model: inherit` — the user's session model is honored, never hardcoded.
-- Plugin-shipped subagents omit the banned frontmatter fields (`hooks`, `mcpServers`, `permissionMode`). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) declare inline `mcpServers` — a capability silently ignored on plugin agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) — so they run at **project scope**. To stop them from *also* loading as broken plugin-namespaced duplicates (`qa-catalog:qa-page-analyzer` with no browser, wasting session context), `plugin.json` declares an explicit `agents` allowlist of only the three true plugin subagents (`route-discoverer`, `test-author`, `catalog-reconciler`). The two browser agents ship in `agents/` purely as templates that `/qa-catalog:init` Phase 0 copies into `.claude/agents/`. Pointing the `agents` allowlist into the default `agents/` folder raises no `/doctor` warning per the [reference](https://code.claude.com/docs/en/plugins-reference#path-behavior-rules).
+- Plugin-shipped subagents omit the banned frontmatter fields (`hooks`, `mcpServers`, `permissionMode`). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) declare inline `mcpServers` — a capability silently ignored on plugin agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) — so they run at **project scope**. To stop them from *also* loading as broken plugin-namespaced duplicates (`qa-my-app:qa-page-analyzer` with no browser, wasting session context), `plugin.json` declares an explicit `agents` allowlist of only the three true plugin subagents (`route-discoverer`, `test-author`, `catalog-reconciler`). The two browser agents ship in `agents/` purely as templates that `/qa-my-app:init` Phase 0 copies into `.claude/agents/`. Pointing the `agents` allowlist into the default `agents/` folder raises no `/doctor` warning per the [reference](https://code.claude.com/docs/en/plugins-reference#path-behavior-rules).
 - All workflow skills set `disable-model-invocation: true` so Claude can't auto-trigger destructive operations.
-- All workflow skills declare every spawned agent in `allowed-tools` — plugin-scope ids (`Agent(qa-catalog:route-discoverer)`, `Agent(qa-catalog:test-author)`, `Agent(qa-catalog:catalog-reconciler)`) and project-scope ids (`Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`).
+- All workflow skills declare every spawned agent in `allowed-tools` — plugin-scope ids (`Agent(qa-my-app:route-discoverer)`, `Agent(qa-my-app:test-author)`, `Agent(qa-my-app:catalog-reconciler)`) and project-scope ids (`Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`).
 - `hooks/hooks.json` uses exec form (`command + args`), seconds-based timeouts, and `async: true` for the observational `PostToolUse` hook.
 - Sensitive `userConfig` fields are `sensitive: true` and exposed only via env vars (`CLAUDE_PLUGIN_OPTION_<KEY>`).
 - Every path reference uses `${CLAUDE_PLUGIN_ROOT}` so the plugin works regardless of install location.

@@ -1,6 +1,6 @@
 ---
 title: Publish to a marketplace
-description: Three ways to distribute the qa-catalog plugin — your own git marketplace, the Anthropic community marketplace, or the official one.
+description: Three ways to distribute the qa-my-app plugin — your own git marketplace, the Anthropic community marketplace, or the official one.
 ---
 
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
@@ -17,10 +17,10 @@ The repo is already set up for this. Anyone can install once the repo is reachab
 
 ```text
 /plugin marketplace add elwizard33/qa-my-app
-/plugin install qa-catalog@qa-my-app
+/plugin install qa-my-app@qa-my-app
 ```
 
-(`qa-catalog` = plugin name, `qa-my-app` = marketplace name.)
+(`qa-my-app` = plugin name, `qa-my-app` = marketplace name.)
 
 **Updates:** because `plugin.json` has a pinned `"version"`, users only receive updates when you **bump that field** and push. Until you bump, the installed version stays frozen — see [Version resolution](https://code.claude.com/docs/en/plugin-marketplaces#version-resolution).
 
@@ -38,7 +38,7 @@ Users then install with:
 
 ```text
 /plugin marketplace add anthropics/claude-plugins-community
-/plugin install qa-catalog@claude-community
+/plugin install qa-my-app@claude-community
 ```
 
 ## Path C — `claude-plugins-official` (curated)

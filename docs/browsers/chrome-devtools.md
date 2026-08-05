@@ -19,7 +19,7 @@ network/console inspection with source-mapped stack traces.
 
 ## Configuration
 
-`/qa-catalog:init` writes this `mcpServers` block into each project-level browser
+`/qa-my-app:init` writes this `mcpServers` block into each project-level browser
 agent (`.claude/agents/qa-page-analyzer.md`, `.claude/agents/qa-test-runner.md`):
 
 ```yaml
@@ -27,7 +27,7 @@ mcpServers:
   - chrome-devtools:
       type: stdio
       command: npx
-      args: ["-y", "chrome-devtools-mcp@latest", "--isolated", "--headless"]
+      args: ["-y", "chrome-devtools-mcp@1.6.0", "--isolated", "--headless"]
 ```
 
 - `--isolated` gives each spawn a **temporary** user-data dir that is cleaned up

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Verifies a single test-runner result.md against the canonical schema.
-// Called by the /qa-catalog:run-all dispatch loop after a runner reports back,
+// Called by the /qa-my-app:run-all dispatch loop after a runner reports back,
 // so the supervisor can confirm the task was ACTUALLY completed before marking
 // it done in the task-queue index.
 //

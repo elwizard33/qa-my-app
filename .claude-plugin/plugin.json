@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "qa-catalog",
+  "name": "qa-my-app",
   "displayName": "QA My App",
   "description": "End-to-end QA testing as a Claude Code plugin. Auto-discovers your stack and routes, drives every page in a real browser via the bundled Playwright MCP, runs the whole platform in parallel test-runner subagents, verifies each result against a schema, and files defects to GitHub/Jira/Azure DevOps if connected. No test code to write — the plugin understands your app from source.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": {
     "name": "elwizard33",
     "email": "elwizard33@users.noreply.github.com",
@@ -28,7 +28,7 @@
     "parallel_agents": {
       "type": "number",
       "title": "Parallel page-analyzer agents",
-      "description": "Maximum number of page-analyzer subagents the orchestrator runs concurrently during /qa-catalog:init and /qa-catalog:scan. Each agent uses its own isolated Playwright browser context. Set to 1 to serialize. Recommended: 2-4 on a laptop, 4-8 on a workstation.",
+      "description": "Maximum number of page-analyzer subagents the orchestrator runs concurrently during /qa-my-app:init and /qa-my-app:scan. Each agent uses its own isolated Playwright browser context. Set to 1 to serialize. Recommended: 2-4 on a laptop, 4-8 on a workstation.",
       "default": 3,
       "min": 1,
       "max": 12
@@ -44,7 +44,7 @@
     "parallel_test_runners": {
       "type": "number",
       "title": "Parallel test-runner agents",
-      "description": "Maximum concurrent test-runner subagents the orchestrator runs during /qa-catalog:run-all. Each runner drives its own isolated Playwright browser context against the shared MCP server. Set to 1 to serialize a full-platform regression. Recommended: 2-4 on a laptop, 4-8 on a workstation. The shared dev server is the practical ceiling.",
+      "description": "Maximum concurrent test-runner subagents the orchestrator runs during /qa-my-app:run-all. Each runner drives its own isolated Playwright browser context against the shared MCP server. Set to 1 to serialize a full-platform regression. Recommended: 2-4 on a laptop, 4-8 on a workstation. The shared dev server is the practical ceiling.",
       "default": 3,
       "min": 1,
       "max": 12
@@ -52,7 +52,7 @@
     "browser_engine": {
       "type": "string",
       "title": "Browser engine",
-      "description": "Which browser-automation MCP the project-level qa-page-analyzer / qa-test-runner agents drive: playwright (default, full screenshot/console/network fidelity, all browsers), chrome-devtools (Chrome-only, DevTools-grade performance + network insight), or stagehand (Browserbase cloud browser, AI-driven act/observe/extract — experimental). /qa-catalog:init writes the matching mcpServers block into .claude/agents/. See docs/browsers/.",
+      "description": "Which browser-automation MCP the project-level qa-page-analyzer / qa-test-runner agents drive: playwright (default, full screenshot/console/network fidelity, all browsers), chrome-devtools (Chrome-only, DevTools-grade performance + network insight), or stagehand (Browserbase cloud browser, AI-driven act/observe/extract — experimental). /qa-my-app:init writes the matching mcpServers block into .claude/agents/. See docs/browsers/.",
       "default": "playwright"
     },
     "browser_channel": {
@@ -90,7 +90,7 @@
     "auth_password": {
       "type": "string",
       "title": "Default auth password",
-      "description": "Password used when auth_mode is shared-credentials. Stored in the OS keychain.",
+      "description": "Password used when auth_mode is shared-credentials. Stored in the OS keychain. Note: Claude Code never substitutes sensitive config into skill or agent content, so the skills resolve the shared password via scripts/auth-resolve.mjs instead — give your default role a shared-credentials entry in QA-tests/.qa-catalog/auth.local.json with a ${ENV_VAR} password reference.",
       "sensitive": true,
       "default": ""
     },
@@ -103,7 +103,7 @@
     "auth_credentials_file": {
       "type": "file",
       "title": "Per-role credential map",
-      "description": "Path to the per-role credential map used when auth_mode is per-role. Defaults to QA-tests/.qa-catalog/auth.local.json (scaffolded by /qa-catalog:init). This file is gitignored; it holds non-secret usernames + storageState paths and references passwords via ${ENV_VAR} so no plaintext secret is ever written to disk. Resolved by scripts/auth-resolve.mjs.",
+      "description": "Path to the per-role credential map used when auth_mode is per-role. Defaults to QA-tests/.qa-catalog/auth.local.json (scaffolded by /qa-my-app:init). This file is gitignored; it holds non-secret usernames + storageState paths and references passwords via ${ENV_VAR} so no plaintext secret is ever written to disk. Resolved by scripts/auth-resolve.mjs.",
       "default": ""
     },
     "default_role": {

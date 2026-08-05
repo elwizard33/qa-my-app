@@ -22,7 +22,7 @@ QA-tests/
 │   │   └── T03-customers-edit/
 │   │       └── latest.json            # pointer to most recent run that included this task
 │   └── runs/
-│       └── 2026-05-28T14-22-11Z/      # one folder per /qa-catalog:run[-all] invocation
+│       └── 2026-05-28T14-22-11Z/      # one folder per /qa-my-app:run[-all] invocation
 │           ├── run.json               # run metadata + settings snapshot
 │           ├── task-queue.json        # live task index (run-all only)
 │           ├── report.html            # self-contained, auto-refreshing dashboard
@@ -35,7 +35,7 @@ QA-tests/
 │               └── ...
 └── .qa-catalog/
     ├── fingerprints.json              # sha256 per analyzed source file
-    └── backup-20251108-1530/          # created by /qa-catalog:scan before overwrite
+    └── backup-20251108-1530/          # created by /qa-my-app:scan before overwrite
 ```
 
 ## Task file template
@@ -86,7 +86,7 @@ Every `result.md` is identical in shape and is validated by `scripts/verify-resu
 | email | pattern | "Invalid email" | "Invalid email" | ✓ |
 
 ## Acceptance criteria
-<!-- present only when the task was authored from a ticket (e.g. via /qa-catalog:verify PROJ-123) -->
+<!-- present only when the task was authored from a ticket (e.g. via /qa-my-app:verify PROJ-123) -->
 | # | Acceptance criterion | Verified by | Result |
 |---|---|---|---|
 | AC-1 | Editing a customer's email shows a "Saved" toast | TC-01 | ✓ |

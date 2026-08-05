@@ -17,8 +17,8 @@ description: When QA My App is the right tool — and when to reach for somethin
 2. **Discover every route** statically from the source tree, with auth/role/guard/HTTP-method metadata.
 3. **Open each page** in a real browser via the configured browser engine (Playwright by default) and inventory every form field, validator, button, modal, dialog, tab, and table.
 4. **Author deep test tasks** into `QA-tests/tasks/` using an enforced template — happy path (fill every field and **submit for real**) + validation matrix + modal coverage + button coverage + edge cases.
-5. **Watch the codebase** via SessionStart + PostToolUse hooks and a Git pre-commit hook. When a route's source drifts from the catalog, you're nudged (or commits are blocked) until you run `/qa-catalog:sync`.
-6. **Run one task, a subset, or every task in parallel** with `/qa-catalog:run` / `/qa-catalog:run-all`. Each spawn writes a date-stamped `result.md` with embedded screenshots, plus a top-level run summary and an append-only history index.
-7. **Verify just what changed** with `/qa-catalog:verify` — scopes from the conversation + uncommitted diff, a branch/PR range, or a connected ticket's acceptance criteria, then re-authors and runs only the affected tasks.
+5. **Watch the codebase** via SessionStart + PostToolUse hooks and a Git pre-commit hook. When a route's source drifts from the catalog, you're nudged (or commits are blocked) until you run `/qa-my-app:sync`.
+6. **Run one task, a subset, or every task in parallel** with `/qa-my-app:run` / `/qa-my-app:run-all`. Each spawn writes a date-stamped `result.md` with embedded screenshots, plus a top-level run summary and an append-only history index.
+7. **Verify just what changed** with `/qa-my-app:verify` — scopes from the conversation + uncommitted diff, a branch/PR range, or a connected ticket's acceptance criteria, then re-authors and runs only the affected tasks.
 
 This plugin is project-agnostic — no app-specific assumptions.

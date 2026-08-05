@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Compares source-file SHAs against QA-tests/.qa-catalog/fingerprints.json and emits a drift report.
 // Modes:
-//   --json           print JSON drift report to stdout (used as context in /qa-catalog:sync)
+//   --json           print JSON drift report to stdout (used as context in /qa-my-app:sync)
 //   --silent         emit nothing on no drift, short note on drift (for SessionStart/PostToolUse hooks)
-//   --notify         print a one-line nudge ("⚠ 2 routes drifted — run /qa-catalog:sync")
+//   --notify         print a one-line nudge ("⚠ 2 routes drifted — run /qa-my-app:sync")
 //   --precommit      exit 1 if drift detected (used by .git/hooks/pre-commit)
 //   --session-start  marker flag (no behavioral change; lets hooks log differently)
 //   --post-tool      marker flag
@@ -48,7 +48,7 @@ for (const route of catalog.routes ?? []) {
 }
 
 // `added` is left empty here; the authoritative "added routes" list is produced
-// by the route-discoverer subagent during /qa-catalog:sync. This script only
+// by the route-discoverer subagent during /qa-my-app:sync. This script only
 // detects drift in already-cataloged files.
 const added = [];
 
@@ -63,10 +63,10 @@ const driftCount = stale.length + removed.length;
 
 if (flags.has("--precommit")) {
   if (driftCount > 0) {
-    console.error(`\n[qa-catalog] ${driftCount} route(s) drifted from catalog.`);
+    console.error(`\n[qa-my-app] ${driftCount} route(s) drifted from catalog.`);
     console.error(`  stale:   ${stale.map(s => s.path).join(", ") || "-"}`);
     console.error(`  removed: ${removed.map(r => r.path).join(", ") || "-"}`);
-    console.error(`Run /qa-catalog:sync inside Claude Code, commit the updated QA-tests/, then retry.`);
+    console.error(`Run /qa-my-app:sync inside Claude Code, commit the updated QA-tests/, then retry.`);
     console.error(`(To bypass: 'git commit --no-verify' — not recommended.)\n`);
     process.exit(1);
   }
@@ -75,17 +75,17 @@ if (flags.has("--precommit")) {
 
 if (driftCount === 0) {
   if (flags.has("--silent")) process.exit(0);
-  console.log("[qa-catalog] up to date");
+  console.log("[qa-my-app] up to date");
   process.exit(0);
 }
 
 if (flags.has("--session-start")) {
   // Inject drift context into Claude's session via hookSpecificOutput.additionalContext
   // per https://code.claude.com/docs/en/hooks#sessionstart-decision-control
-  const lines = [`[qa-catalog] ${driftCount} route(s) drifted from the catalog:`];
+  const lines = [`[qa-my-app] ${driftCount} route(s) drifted from the catalog:`];
   for (const s of stale) lines.push(`  ~ ${s.path} (${s.sourceFile})`);
   for (const r of removed) lines.push(`  - ${r.path} (${r.sourceFile})`);
-  lines.push(`Suggest running /qa-catalog:sync to reconcile before authoring new tests.`);
+  lines.push(`Suggest running /qa-my-app:sync to reconcile before authoring new tests.`);
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "SessionStart",
@@ -96,12 +96,12 @@ if (flags.has("--session-start")) {
 }
 
 if (flags.has("--notify") || flags.has("--silent")) {
-  console.log(`[qa-catalog] ⚠ ${driftCount} route(s) drifted — run /qa-catalog:sync`);
+  console.log(`[qa-my-app] ⚠ ${driftCount} route(s) drifted — run /qa-my-app:sync`);
   process.exit(0);
 }
 
 // Default human-readable
-console.log(`[qa-catalog] ${driftCount} drift(s) detected:`);
+console.log(`[qa-my-app] ${driftCount} drift(s) detected:`);
 for (const s of stale) console.log(`  ~ ${s.path}  (${s.sourceFile})`);
 for (const r of removed) console.log(`  - ${r.path}  (${r.sourceFile})`);
-console.log("Run /qa-catalog:sync to reconcile.");
+console.log("Run /qa-my-app:sync to reconcile.");

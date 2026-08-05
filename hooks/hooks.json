@@ -9,7 +9,7 @@
             "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/catalog-diff.mjs", "--session-start"],
             "timeout": 15,
-            "statusMessage": "qa-catalog: checking drift"
+            "statusMessage": "qa-my-app: checking drift"
           }
         ]
       }
@@ -24,7 +24,7 @@
             "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/catalog-diff.mjs", "--silent", "--post-tool"],
             "timeout": 10,
             "async": true,
-            "statusMessage": "qa-catalog: drift check"
+            "statusMessage": "qa-my-app: drift check"
           }
         ]
       }

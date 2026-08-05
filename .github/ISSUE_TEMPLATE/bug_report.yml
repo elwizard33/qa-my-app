@@ -1,5 +1,5 @@
 name: Bug report
-description: Something is broken in the qa-catalog plugin (skill, agent, hook, validation, install).
+description: Something is broken in the qa-my-app plugin (skill, agent, hook, validation, install).
 labels: ["bug", "needs-triage"]
 body:
   - type: markdown
@@ -17,7 +17,7 @@ body:
   - type: input
     id: plugin-version
     attributes:
-      label: qa-catalog plugin version
+      label: qa-my-app plugin version
       description: From `.claude-plugin/plugin.json` `version` field or `/plugin` picker.
       placeholder: "e.g. 0.2.0"
     validations:
@@ -47,11 +47,11 @@ body:
       label: Which skill / command did you run?
       multiple: true
       options:
-        - "/qa-catalog:init"
-        - "/qa-catalog:scan"
-        - "/qa-catalog:sync"
-        - "/qa-catalog:run"
-        - "/qa-catalog:run-all"
+        - "/qa-my-app:init"
+        - "/qa-my-app:scan"
+        - "/qa-my-app:sync"
+        - "/qa-my-app:run"
+        - "/qa-my-app:run-all"
         - SessionStart hook
         - PostToolUse hook
         - Plugin install / validation
@@ -77,8 +77,8 @@ body:
       label: Steps to reproduce
       description: Minimal sequence of slash commands / file edits / user-config values to trigger the bug.
       placeholder: |
-        1. /plugin install qa-catalog@qa-my-app
-        2. /qa-catalog:init http://localhost:3000
+        1. /plugin install qa-my-app@qa-my-app
+        2. /qa-my-app:init http://localhost:3000
         3. Observe: ...
     validations:
       required: true

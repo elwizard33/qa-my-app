@@ -1,5 +1,5 @@
 ---
-description: Execute a single QA task end-to-end via the qa-test-runner subagent (project-level, installed by /qa-catalog:init). Writes a date-stamped result.md with per-TC pass/fail, embedded screenshots, console errors, and network failures, then appends to QA-tests/results/history.json. Argument is the task id (e.g. T03 or T03-customers-create).
+description: Execute a single QA task end-to-end via the qa-test-runner subagent (project-level, installed by /qa-my-app:init). Writes a date-stamped result.md with per-TC pass/fail, embedded screenshots, console errors, and network failures, then appends to QA-tests/results/history.json. Argument is the task id (e.g. T03 or T03-customers-create).
 when_to_use: |
   Use to execute a single QA task, test one specific page or user flow, or re-run a previously failing test case in the browser. Trigger phrases include "run task", "test this page", "run T01", "execute a test", "run one qa test", and "test the customers page".
 argument-hint: <task-id>
@@ -7,7 +7,7 @@ disable-model-invocation: true
 allowed-tools: Read, Glob, Write, Edit, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner)
 ---
 
-# /qa-catalog:run — Execute one task
+# /qa-my-app:run — Execute one task
 
 ## Project context
 - Task id: `$ARGUMENTS`
@@ -49,6 +49,14 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --json
 ```
 Use the returned `roles` object as `credentialsByRole`. If the file is absent (`present: false`) or `auth_mode` is not `per-role`, omit `credentialsByRole` and let the runner fall back to the single shared credential below. Never print resolved passwords back to the user.
 
+**Resolving the shared password.** `auth_password` is declared `sensitive: true`, so Claude Code stores it in the OS keychain and **never substitutes it into skill or agent content** — writing `${user_config.auth_password}` here would hand the runner that literal string, not the password. When `auth_mode` is `shared-credentials`, resolve the credential through the same script instead:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" --role "${user_config.default_role}" --json
+```
+
+Give the default role a `shared-credentials` entry in `QA-tests/.qa-catalog/auth.local.json` whose `password` is a `${ENV_VAR}` reference. If that lookup returns `resolved: false`, tell the user which env var is missing and stop before running protected tasks — do not fall back to an empty password.
+
 Spawn the project-level agent **`qa-test-runner`** with this payload:
 
 ```json
@@ -64,7 +72,7 @@ Spawn the project-level agent **`qa-test-runner`** with this payload:
     "settleMs":       ${user_config.settle_ms},
     "authMode":       "${user_config.auth_mode}",
     "defaultRole":    "${user_config.default_role}",
-    "credentials":    { "username": "${user_config.auth_username}", "password": "${user_config.auth_password}" },
+    "credentials":    { "username": "${user_config.auth_username}", "password": "<resolved via auth-resolve.mjs — never ${user_config.auth_password}>" },
     "credentialsByRole": { ...roles object from auth-resolve.mjs, or omit if not per-role... },
     "storageStatePath": "${user_config.auth_storage_state_path}"
   }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Detects the web framework + broader tech stack in the current project and prints a JSON descriptor to stdout.
-// Used by /qa-catalog:init and /qa-catalog:sync as dynamic context and persisted into QA-tests/catalog.json.
+// Used by /qa-my-app:init and /qa-my-app:sync as dynamic context and persisted into QA-tests/catalog.json.
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";

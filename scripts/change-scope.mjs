@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Resolves the set of catalog routes/tasks affected by a change, for /qa-catalog:verify.
+// Resolves the set of catalog routes/tasks affected by a change, for /qa-my-app:verify.
 // Maps changed source files onto catalog.routes[].sourceFile (and layoutChain) and
 // returns the routes + their tasks to (re)author and run.
 //

@@ -3,10 +3,10 @@ description: Re-scan only the routes whose source files changed since the last c
 when_to_use: |
   Use after pulling new code, after modifying route source files, or when the file-change hook flags the catalog as stale. Trigger phrases include "sync catalog", "update tests", "catalog is stale", "routes changed", "sync qa", "update qa catalog", and "reconcile tests".
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node *), Bash(git *), Bash(mkdir *), Agent(qa-catalog:route-discoverer), Agent(qa-page-analyzer), Agent(qa-catalog:test-author), Agent(qa-catalog:catalog-reconciler)
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node *), Bash(git *), Bash(mkdir *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-my-app:catalog-reconciler)
 ---
 
-# /qa-catalog:sync — Reconcile catalog with current code
+# /qa-my-app:sync — Reconcile catalog with current code
 
 ## Project context
 - Catalog present: !`test -f QA-tests/catalog.json && echo YES || echo NO`
@@ -30,11 +30,11 @@ allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node *), Bash(git *), Bash(mk
 ```bash
 mkdir -p .claude/agents
 ```
-Then read `${CLAUDE_PLUGIN_ROOT}/agents/qa-page-analyzer.md` and write to `.claude/agents/qa-page-analyzer.md`. Do the same for `qa-test-runner.md`. If the files already exist, leave them unchanged. For any file you **just created**, if `${user_config.browser_engine}` is not `playwright` (or empty), replace its `mcpServers:` frontmatter block with the one for the selected engine exactly as documented in `/qa-catalog:init` Phase 0 and [docs/browsers/](../../docs/browsers/README.md).
+Then read `${CLAUDE_PLUGIN_ROOT}/agents/qa-page-analyzer.md` and write to `.claude/agents/qa-page-analyzer.md`. Do the same for `qa-test-runner.md`. If the files already exist, leave them unchanged. For any file you **just created**, if `${user_config.browser_engine}` is not `playwright` (or empty), replace its `mcpServers:` frontmatter block with the one for the selected engine exactly as documented in `/qa-my-app:init` Phase 0 and [docs/browsers/](../../docs/browsers/README.md).
 
-When spawning catalog-reconciler, route-discoverer, and test-author, use the **plugin-namespaced names** (`qa-catalog:catalog-reconciler`, `qa-catalog:route-discoverer`, `qa-catalog:test-author`). When spawning browser agents, use the **project-level name** (`qa-page-analyzer`). All are pre-approved in `allowed-tools` above.
+When spawning catalog-reconciler, route-discoverer, and test-author, use the **plugin-namespaced names** (`qa-my-app:catalog-reconciler`, `qa-my-app:route-discoverer`, `qa-my-app:test-author`). When spawning browser agents, use the **project-level name** (`qa-page-analyzer`). All are pre-approved in `allowed-tools` above.
 
-If `Catalog present` is `NO`, **stop** and tell the user to run `/qa-catalog:init` first.
+If `Catalog present` is `NO`, **stop** and tell the user to run `/qa-my-app:init` first.
 
 The drift report JSON has this shape:
 ```json
@@ -57,7 +57,7 @@ Spawn the **`catalog-reconciler`** subagent with the drift report. It returns a 
 
 ### Phase 2 — Execute plan
 - If `plan.discover`: spawn `route-discoverer` restricted to the `added` files; merge new routes into the work list.
-- For each route in `plan.rescan` ∪ newly-discovered: spawn `qa-page-analyzer` then `test-author` in parallel batches of `${user_config.parallel_agents}` and `${user_config.parallel_test_authors}` respectively, with the same settings payloads as `/qa-catalog:init`. Each `qa-page-analyzer` spawn gets its own browser process (or cloud session) — no `contextId` needed for isolation.
+- For each route in `plan.rescan` ∪ newly-discovered: spawn `qa-page-analyzer` then `test-author` in parallel batches of `${user_config.parallel_agents}` and `${user_config.parallel_test_authors}` respectively, with the same settings payloads as `/qa-my-app:init`. Each `qa-page-analyzer` spawn gets its own browser process (or cloud session) — no `contextId` needed for isolation.
 - For each task in `plan.delete`: remove `QA-tests/tasks/<task>.md`. If a route is removed entirely, also remove its `QA-tests/routes/<slug>.md`.
 
 ### Phase 3 — Patch catalog
