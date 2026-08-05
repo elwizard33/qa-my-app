@@ -13,6 +13,15 @@ description: The /qa-my-app slash commands.
 | `/qa-my-app:run-all [filter]` | Execute many tasks in parallel, with verification + retry. |
 | `/qa-my-app:verify [scope]` | Test only what changed (or what a ticket asks for). Re-authors the affected tasks and runs them, reporting pass/fail **per acceptance criterion**. The fast inner-loop counterpart to `run-all`. |
 
+## Who can invoke what
+
+`status` and `verify` are **model-invocable**: you can type them, or just ask in plain language —
+"is QA set up?", "verify what I changed", "does my change work?" — and Claude will reach for them.
+
+The other five rewrite the catalog or spawn long browser runs, so they set
+`disable-model-invocation: true` and only ever run when **you** type them. Claude will never decide
+on its own to re-baseline your catalog or kick off a full regression.
+
 ## `/qa-my-app:run-all` filters
 
 ```text

@@ -28,11 +28,11 @@
 
 1. **Plugin subagents must NOT declare `hooks`, `mcpServers`, or `permissionMode`.** Silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) live at project scope because they need inline `mcpServers`. **They must NOT be auto-loaded as plugin agents** — `plugin.json` declares an explicit `agents` allowlist (`route-discoverer`, `test-author`, `catalog-reconciler` only) so the two browser agents in `agents/` are treated purely as copy-templates, not registered as `qa-my-app:*` agents. If you add a new *plugin-scope* agent, add it to that allowlist too, or it won't load.
 2. **`model: inherit` everywhere.** No agent hardcodes a model id. The user's session model is honored. **`effort` is the cost knob, not `model`.** Tune `effort` per agent by how much reasoning the task genuinely needs — reasoning-heavy agents that infer intent from source (`qa-page-analyzer`) keep `effort: high`; deterministic executors that follow a pre-authored task verbatim (`qa-test-runner`) use `effort: medium` to avoid spending extended-thinking output tokens (multiplied across every parallel spawn). Do not raise an agent's `effort` without a reasoning justification.
-3. **`disable-model-invocation: true` on every workflow skill.** Slash-only entry; Claude cannot auto-trigger them.
+3. **`disable-model-invocation: true` on every *destructive or costly* skill.** `init`, `scan`, `sync`, `run`, `run-all` are slash-only — Claude must never start a catalog rewrite or a browser run on its own. `status` (read-only) and `verify` (change-scoped) omit the flag so Claude can reach them from natural phrasing. Note the flag also drops the skill's `description` from context entirely, so a `when_to_use` block on a slash-only skill is inert — don't add one expecting it to fire.
 4. **Path portability.** Every script reference uses `${CLAUDE_PLUGIN_ROOT}`. No absolute paths.
 5. **Exec form for hook commands.** `command + args` array — never a single shell string (`${CLAUDE_PLUGIN_ROOT}` would be quoted incorrectly).
 6. **Timeouts in seconds.** Per [hooks → Common fields](https://code.claude.com/docs/en/hooks#common-fields).
-7. **Sensitive userConfig fields → `sensitive: true`.** Stored in OS keychain; exposed via `CLAUDE_PLUGIN_OPTION_<KEY>`.
+7. **Sensitive userConfig fields → `sensitive: true`.** Stored in OS keychain; exposed to **hook processes only**, as `CLAUDE_PLUGIN_OPTION_<KEY>`. Claude Code does **not** substitute them into skill or agent content — `${user_config.<sensitive_key>}` in a SKILL.md renders as that literal string, not the value. Anything a skill needs at run time must come from a file or an env var resolved by a script (see `scripts/auth-resolve.mjs`).
 8. **Pinned `version` in `plugin.json` → bump on every release + update `CHANGELOG.md`.** Users only get updates on bump per [plugin-marketplaces → Version resolution](https://code.claude.com/docs/en/plugin-marketplaces#version-resolution).
 9. **CI is the gate.** `claude plugin validate . --strict` runs on both manifests + `node --check` on every `.mjs`. All must pass.
 10. **GitHub Actions pinned by commit SHA** with a `# v…` version comment for readability.
@@ -60,7 +60,7 @@ With up to 12 parallel runners + 4 analyzers + 1 supervisor visible during `/qa-
 - **Adding a new framework adapter:** `scripts/detect-framework.mjs` (detection) + `agents/route-discoverer.md` (per-framework discovery rules).
 - **Adding a new userConfig field:** `.claude-plugin/plugin.json` `userConfig` block. If it's an array, use `multiple: true`. If sensitive, use `sensitive: true`.
 - **Adding a new hook:** `hooks/hooks.json`. Always include `matcher`, `timeout`, exec form. Use `async: true` for observational/PostToolUse hooks.
-- **Adding a new skill:** create `skills/<name>/SKILL.md` with `description`, `when_to_use`, `disable-model-invocation: true`, `allowed-tools`, optional `argument-hint`.
+- **Adding a new skill:** create `skills/<name>/SKILL.md` with `description`, `allowed-tools`, optional `argument-hint`. Add `disable-model-invocation: true` if it rewrites the catalog or drives a browser; otherwise omit it and add a `when_to_use` block with trigger phrases so Claude can find it.
 
 ## Don'ts
 

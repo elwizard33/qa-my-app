@@ -8,11 +8,11 @@
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet)](https://code.claude.com/docs/en/plugins)
 [![plugin validate --strict](https://img.shields.io/badge/plugin%20validate-strict-success)](https://code.claude.com/docs/en/plugins-reference)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
 
 > **End-to-end QA testing as a Claude Code plugin.** Drop it into any web-app repo and Claude detects the framework, walks every page in a real browser, drives every form / modal / button / role gate, runs the whole platform in parallel, and reports back with screenshots, console logs, network traces, and filed defects. No test code to write, no fixtures to wire — the plugin understands your app from the source.
 
-**At a glance:** 6 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
+**At a glance:** 7 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
 
 > 📖 **Full documentation:** [elwizard33.github.io/qa-my-app](https://elwizard33.github.io/qa-my-app/) — install guide, command reference, architecture, browser engines, and publishing.
 
@@ -21,7 +21,7 @@
 - [Install](#install) · [Quickstart](#quickstart) · [When to use it](#when-to-use-qa-my-app)
 - [The task catalog](#the-task-catalog-how-qa-my-app-keeps-runs-deterministic) · [What `/qa-my-app:init` does](#what-happens-during-qa-my-appinit) · [Issue trackers](#connecting-issue-trackers-github--jira--azure-devops)
 - [Generated layout](#generated-layout-in-the-target-project) · [Architecture](#architecture) · [Subagents](#subagents) · [Frameworks](#supported-frameworks)
-- [Settings](#settings-userconfig) · [Browser engines](#browser-engines) · [Customization](#customization) · [Compliance](#claude-code-compliance-notes)
+- [Settings](#settings-userconfig) · [Auth](#authenticating-protected-routes) · [Browser engines](#browser-engines) · [Customization](#customization) · [Compliance](#claude-code-compliance-notes)
 - [Status](#status) · [Changelog](CHANGELOG.md) · [Audit log](docs/AUDIT.md) · [Architecture deep-dive](docs/ARCHITECTURE.md)
 
 ---
@@ -87,6 +87,13 @@ Inside Claude Code in any project:
 
 That's it — the plugin is installed at **user scope** (available in every repo) and active in your current session.
 
+> **Upgrading from 0.1.0?** The plugin was renamed `qa-catalog` → `qa-my-app` in v1.0.0, so this is a reinstall rather than an update:
+> ```text
+> /plugin uninstall qa-catalog@qa-my-app
+> /plugin install qa-my-app@qa-my-app
+> ```
+> Every command moves from `/qa-catalog:*` to `/qa-my-app:*`. Your generated `QA-tests/` directory is **untouched** — the catalog, fingerprints, results history, and `auth.local.json` all keep working, so you don't need to re-run `init`.
+
 <details>
 <summary><b>What the three commands do, and project-scope install</b></summary>
 
@@ -115,7 +122,7 @@ The local copy takes precedence over any installed marketplace version for that 
 
 > Slash commands are exposed under the `qa-my-app:` namespace (that's the plugin's internal id) — e.g. `/qa-my-app:run-all`. The brand is QA My App; the namespace is a Claude Code plumbing detail.
 
-> **Token efficiency (by design).** Heavy work is isolated so it never floods the main conversation: each browser agent runs in its own context window and returns only a one-line JSON summary, verbose verification is offloaded to the `verify-result.mjs` / `catalog-diff.mjs` Node scripts (a hook, not the model, does the parsing), and the deterministic `qa-test-runner` uses `effort: medium` so extended-thinking tokens aren't spent re-deriving a pre-authored task — multiplied across every parallel runner. Reasoning-heavy analysis (`qa-page-analyzer`) keeps `effort: high`. Slash skills use `disable-model-invocation: true`, so their descriptions stay out of context until you invoke them. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> **Token efficiency (by design).** Heavy work is isolated so it never floods the main conversation: each browser agent runs in its own context window and returns only a one-line JSON summary, verbose verification is offloaded to the `verify-result.mjs` / `catalog-diff.mjs` Node scripts (a hook, not the model, does the parsing), and the deterministic `qa-test-runner` uses `effort: medium` so extended-thinking tokens aren't spent re-deriving a pre-authored task — multiplied across every parallel runner. Reasoning-heavy analysis (`qa-page-analyzer`) keeps `effort: high`. The five skills that overwrite the catalog or spawn browser runs set `disable-model-invocation: true`, which keeps their descriptions out of context entirely until you invoke them; only the two cheap entry points (`status`, `verify`) stay listed so Claude can reach them. The plugin also ships **no session-level MCP server**, so no browser tool descriptions load into your main conversation. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
@@ -357,7 +364,7 @@ Custom frameworks: add a branch to [scripts/detect-framework.mjs](scripts/detect
 
 ## Settings (`userConfig`)
 
-All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/plugin`. Sensitive values are injected as env vars only (`CLAUDE_PLUGIN_OPTION_<KEY>`) and never appear in transcripts.
+All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/plugin`. Values marked `sensitive` go to the OS keychain, are exposed only to hook processes as `CLAUDE_PLUGIN_OPTION_<KEY>`, and never appear in transcripts — or in skill and agent content, which is why passwords are resolved from [`auth.local.json`](#authenticating-protected-routes) instead.
 
 | Setting | Default | Purpose |
 |---|---|---|
@@ -369,9 +376,9 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `browser_channel` | `chromium` | For `playwright` / `chrome-devtools`: `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. Ignored by `stagehand`. |
 | `browser_headless` | `true` | Set false to watch agents work. Ignored by `stagehand` (cloud is always headless). |
 | `settle_ms` | `5000` | Wait after navigation before snapshot (0–60000). |
-| `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state` / `per-role`. |
+| `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state` / `per-role`. See [Authenticating protected routes](#authenticating-protected-routes). |
 | `auth_username` | _empty_ | Single shared username, used when `auth_mode = shared-credentials`. |
-| `auth_password` | _empty (sensitive)_ | Single shared password. Env-only / OS keychain. |
+| `auth_password` | _empty (sensitive)_ | OS keychain only. **Not readable by the skills** — Claude Code never substitutes `sensitive` config into skill or agent content. Put the password in `auth.local.json` as a `${ENV_VAR}` reference instead; see [Authenticating protected routes](#authenticating-protected-routes). |
 | `auth_storage_state_path` | _empty_ | Playwright storage-state JSON file. |
 | `auth_credentials_file` | _empty_ | Per-role credential map for `auth_mode = per-role` (default `QA-tests/.qa-catalog/auth.local.json`). Gitignored; passwords referenced via `${ENV_VAR}`. |
 | `default_role` | `anonymous` | Assumed role when guards don't restrict. |
@@ -379,6 +386,65 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `task_depth` | `deep` | `deep` / `standard` / `smoke`. |
 | `max_tasks_per_route` | `6` | Upper bound the test-author enforces (1–20). |
 | `exclude_globs` | _empty_ | Multi-value list (`multiple: true`) of globs to skip during route discovery (e.g. `**/storybook/**`, `**/__tests__/**`). |
+
+---
+
+## Authenticating protected routes
+
+Every password reaches the browser the same way: through `QA-tests/.qa-catalog/auth.local.json`, which is gitignored and holds **no literal secrets** — only usernames, storageState paths, and `${ENV_VAR}` references. [`scripts/auth-resolve.mjs`](scripts/auth-resolve.mjs) interpolates the env vars at run time and never writes a secret anywhere.
+
+> **Why not the `auth_password` setting?** Claude Code stores `sensitive: true` plugin config in the OS keychain and — by design — **never substitutes it into skill or agent content** ([docs](https://code.claude.com/docs/en/plugins-reference#user-configuration)). A skill that wrote `${user_config.auth_password}` into a subagent payload would hand the runner that literal string, not your password. Sensitive values only reach *hook* processes, as `CLAUDE_PLUGIN_OPTION_<KEY>`. So the credential file is the supported path, and it's the one every auth mode uses.
+
+`/qa-my-app:init` scaffolds the file and gitignores it. Fill in the roles you need:
+
+```jsonc
+{
+  "version": 1,
+  "defaultRole": "anonymous",
+  "roles": {
+    "anonymous": { "authMode": "none" },
+
+    // shared-credentials: one login reused across protected routes.
+    // Point `defaultRole` here if that's your whole auth story.
+    "admin": {
+      "authMode": "shared-credentials",
+      "loginUrl": "/login",
+      "username": "admin@acme.test",
+      "password": "${QA_CRED_ADMIN_PASSWORD}"   // resolved from the environment
+    },
+
+    // storage-state: reuse a saved Playwright session, no login flow at all.
+    "user": {
+      "authMode": "storage-state",
+      "storageStatePath": ".qa-catalog/state/user.json"
+    }
+  }
+}
+```
+
+Export the referenced variables before a run:
+
+```bash
+export QA_CRED_ADMIN_PASSWORD='…'
+```
+
+Check what resolves — output is redacted, so it's safe to paste into an issue:
+
+```bash
+node scripts/auth-resolve.mjs --status
+```
+
+```text
+QA Credentials (per-role)
+=========================
+  source: QA-tests/.qa-catalog/auth.local.json
+  default role: anonymous
+  ✓ anonymous: none
+  ✓ admin: shared-credentials
+  ✗ manager: shared-credentials — missing QA_CRED_MANAGER_PASSWORD
+```
+
+`/qa-my-app:status` surfaces the same line, and any role that fails to resolve has its tasks reported **BLOCKED** rather than silently failing with an empty password. `auth_mode = per-role` looks up each task's required role in this file; `shared-credentials` and `storage-state` resolve `default_role` from it.
 
 ---
 
@@ -427,7 +493,7 @@ The plugin is validated against the published Claude Code contract (manifest, sk
 - **Orchestration follows the canonical "parallel research" pattern** from the [sub-agents docs](https://code.claude.com/docs/en/sub-agents): main session = supervisor, focused subagents run in parallel and report results back. Agent teams ([docs](https://code.claude.com/docs/en/agent-teams)) were considered and rejected — they're flagged experimental, require an env-flag opt-in, and the split-pane mode needs tmux or iTerm2 ("isn’t supported in VS Code’s integrated terminal, Windows Terminal, or Ghostty"). For uniform, non-conversational work like "drive each route and write a result.md" the subagent fan-out gives the same parallelism at a fraction of the token cost and zero environmental dependencies.
 - All subagents use `model: inherit` — the user's session model is honored, never hardcoded.
 - Plugin-shipped subagents omit the banned frontmatter fields (`hooks`, `mcpServers`, `permissionMode`). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) declare inline `mcpServers` — a capability silently ignored on plugin agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) — so they run at **project scope**. To stop them from *also* loading as broken plugin-namespaced duplicates (`qa-my-app:qa-page-analyzer` with no browser, wasting session context), `plugin.json` declares an explicit `agents` allowlist of only the three true plugin subagents (`route-discoverer`, `test-author`, `catalog-reconciler`). The two browser agents ship in `agents/` purely as templates that `/qa-my-app:init` Phase 0 copies into `.claude/agents/`. Pointing the `agents` allowlist into the default `agents/` folder raises no `/doctor` warning per the [reference](https://code.claude.com/docs/en/plugins-reference#path-behavior-rules).
-- All workflow skills set `disable-model-invocation: true` so Claude can't auto-trigger destructive operations.
+- Invocation control is scoped to risk. The five skills that overwrite the catalog or spawn browser runs (`init`, `scan`, `sync`, `run`, `run-all`) set `disable-model-invocation: true` so Claude can't auto-trigger a destructive or costly operation; the read-only `status` and the change-scoped `verify` omit it so Claude can reach them from natural phrasing. Per the [skills docs](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill), that flag also removes a skill's description from context entirely — so a `when_to_use` block on a manual-only skill is inert by design, not an oversight.
 - All workflow skills declare every spawned agent in `allowed-tools` — plugin-scope ids (`Agent(qa-my-app:route-discoverer)`, `Agent(qa-my-app:test-author)`, `Agent(qa-my-app:catalog-reconciler)`) and project-scope ids (`Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`).
 - `hooks/hooks.json` uses exec form (`command + args`), seconds-based timeouts, and `async: true` for the observational `PostToolUse` hook.
 - Sensitive `userConfig` fields are `sensitive: true` and exposed only via env vars (`CLAUDE_PLUGIN_OPTION_<KEY>`).

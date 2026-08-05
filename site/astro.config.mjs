@@ -37,6 +37,7 @@ export default defineConfig({
           items: [
             { label: 'How it works (task catalog)', slug: 'guides/how-it-works' },
             { label: 'What /qa-my-app:init does', slug: 'guides/init' },
+            { label: 'Authenticating protected routes', slug: 'guides/authentication' },
             { label: 'Connecting issue trackers', slug: 'guides/issue-trackers' },
             { label: 'Generated layout', slug: 'guides/generated-layout' },
           ],

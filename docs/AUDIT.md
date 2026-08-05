@@ -87,7 +87,45 @@
 | F-076 | 🟡 Medium | `agents/qa-page-analyzer.md` | Field inventory captured constraints but no concrete sample values, so authored submissions had to guess valid/invalid data. | ✅ Fixed (Pass 7) | Pass 7 |
 | F-077 | 🟠 High | skills, `scripts/` | No change/ticket-scoped workflow — every run was either one task or the whole catalog. No way to "test what I just changed" or "verify this ticket's acceptance criteria." | ✅ Fixed (Pass 7 — new `/qa-my-app:verify` + `change-scope.mjs`) | Pass 7 |
 
-**Counts:** 77 findings tracked · 39 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
+| [F-078](#f-078) | 🔴 Critical | `skills/init`, `skills/run`, `skills/run-all` | `${user_config.auth_password}` was inlined into subagent payloads, but Claude Code never substitutes `sensitive: true` config into skill or agent content — the runner received that literal string, so `auth_mode: shared-credentials` never authenticated. | ✅ Fixed (Pass 8) | Pass 8 |
+| [F-079](#f-079) | 🟠 High | `.mcp.json` | Session-level Playwright MCP loaded ~25 browser tool descriptions into every main conversation, while nothing outside the subagents used them. Both browser agents already declare self-contained inline `mcpServers`. Documented anti-pattern. | ✅ Fixed (Pass 8 — file removed) | Pass 8 |
+| [F-080](#f-080) | 🟡 Medium | `skills/*/SKILL.md` | All 7 skills set `disable-model-invocation: true`, which suppresses the description entirely — yet each carried a `when_to_use` block of trigger phrases that could therefore never fire. Self-contradictory frontmatter. | ✅ Fixed (Pass 8) | Pass 8 |
+| [F-081](#f-081) | 🟡 Medium | `agents/*.md`, docs | Browser MCPs referenced as `@latest`, so each spawn could fetch and execute a different build than the reviewed one — a supply-chain and marketplace-review risk. | ✅ Fixed (Pass 8 — pinned) | Pass 8 |
+| [F-082](#f-082) | 🟢 Low | `plugin.json`, repo | Plugin slug `qa-catalog` diverged from the repo/marketplace/docs brand `qa-my-app`. The slug becomes immutable once published to the community catalog, so the split had to be resolved before submission. | ✅ Fixed (Pass 8 — renamed) | Pass 8 |
+
+**Counts:** 82 findings tracked · 44 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
+
+---
+
+## Pass 8 — 2026-08-05 — docs-grounded compliance sweep + marketplace submission prep
+
+**Scope:** re-verified every plugin component against the *current* Claude Code documentation (fetched at audit time from `code.claude.com/docs/en/`, which now serves the pages that `docs.claude.com` 301s to), then prepared the plugin for submission to the Anthropic community plugin marketplace. Three of the five findings were live defects, not spec drift.
+
+**Method note.** Two things that looked like bugs were confirmed **correct** and deliberately left alone, recorded here so a future pass doesn't "fix" them:
+
+- `${CLAUDE_PLUGIN_ROOT}` in skill bodies is absent from the skills page's substitution table, but the plugins reference resolves it: for *"Skill and agent content"* placeholders resolve *"Anywhere the placeholder appears."*
+- The `plugin.json` `agents` allowlist excluding the two browser agents remains the right workaround for *"plugin subagents don't support the `hooks`, `mcpServers`, or `permissionMode` frontmatter fields."*
+
+### Fixes
+
+- **F-078 (Critical)** — `shared-credentials` auth never worked. [skills/init](../skills/init/SKILL.md), [skills/run](../skills/run/SKILL.md), and [skills/run-all](../skills/run-all/SKILL.md) inlined `${user_config.auth_password}` into the agent payload. Per the [user-configuration docs](https://code.claude.com/docs/en/plugins-reference#user-configuration), only *non-sensitive* values substitute into skill and agent content; sensitive ones reach hook processes alone, as `CLAUDE_PLUGIN_OPTION_<KEY>`. The runner was therefore handed the literal string `${user_config.auth_password}` as the password. All three skills now resolve credentials through [`scripts/auth-resolve.mjs`](../scripts/auth-resolve.mjs) — which already interpolated `${ENV_VAR}` references for `per-role` — and fail loudly when a variable is unset instead of falling back to an empty password. Documented end-to-end in the new [authentication guide](https://elwizard33.github.io/qa-my-app/guides/authentication/).
+- **F-079 (High)** — Removed `.mcp.json`. The [sub-agents docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) state it plainly: *"To keep an MCP server out of the main conversation entirely and avoid its tool descriptions consuming context there, define it inline here rather than in `.mcp.json`."* The plugin did both. Verified no skill or script referenced `mcp__playwright` and that both agents use full inline definitions rather than name references, so removal is behaviour-preserving. Directly lowers the **Context cost** figure `/plugin` now displays on every listing.
+- **F-080 (Medium)** — Invocation control is now scoped to risk rather than applied blanket. `disable-model-invocation: true` [removes a skill's description from context entirely](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill), so the `when_to_use` trigger phrases on all seven skills were dead weight. `status` (read-only) and `verify` (change-scoped inner loop) now omit the flag; the five that rewrite the catalog or spawn browser runs keep it. Confirmed empirically — before the change, a session with the plugin enabled listed the three `qa-my-app:` agents but zero `qa-my-app:` skills.
+- **F-081 (Medium)** — Pinned `@playwright/mcp@0.0.78` and `chrome-devtools-mcp@1.6.0` across the agent templates, the `init` engine-swap blocks, and every doc. Floating `@latest` meant each parallel spawn could `npx`-fetch and execute a build nobody reviewed. Stagehand needs no pin — it's an HTTP MCP, not an npx process.
+- **F-082 (Low)** — Renamed the plugin `qa-catalog` → `qa-my-app` across 54 files, aligning slug, namespace, marketplace, repo, and docs site. The `QA-tests/.qa-catalog/` **data directory is deliberately unchanged** so existing catalogs, fingerprints, and `auth.local.json` files survive the upgrade; the rename was applied with that path sentinel-protected. Breaking for installed users (documented reinstall path in the [README](../README.md#install) and [CHANGELOG](../CHANGELOG.md)). Forced now because a plugin's slug is immutable once published to the community catalog.
+
+### Verification
+
+- `claude plugin validate --strict` passes on both manifests (marketplace and plugin, the latter checked in isolation since the repo root carries both).
+- `node --check` passes on all 9 `scripts/*.mjs`.
+- `claude --plugin-dir .` registers all 7 skills under the new namespace — a functional load test, not just schema validation.
+- Both CI workflows green on the release commit.
+
+### Marketplace submission notes
+
+The **official** marketplace (`claude-plugins-official`) has no application process — [the docs](https://code.claude.com/docs/en/plugins#submit-your-plugin-to-the-community-marketplace) state Anthropic curates it at its discretion and *"the submission form does not add plugins to the official marketplace."* The reachable target is the **community** marketplace: submit at `platform.claude.com/plugins/submit` (the Console form; the claude.ai form requires a Team/Enterprise org with directory-management access), which runs the same `plugin validate` check plus automated safety screening. Approved plugins are pinned to a commit SHA in `anthropics/claude-plugins-community`, CI bumps the pin as commits land, and the public catalog syncs **nightly**. Never open a PR against that repo — it's a read-only mirror and PRs auto-close.
+
+Platform support was scoped to **Claude Code only**. Cowork does support hooks, subagents, and local MCP servers, but all 7 skills shell out to `Bash(node *)` and 4 need `Bash(git *)`, against a git checkout with a dev server on localhost — which is not Cowork's surface.
 
 ---
 

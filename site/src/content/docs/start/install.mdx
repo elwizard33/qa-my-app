@@ -15,6 +15,17 @@ Inside Claude Code, in any project:
 
 That's it — the plugin is installed at **user scope** (available in every repo) and active in your current session.
 
+<Aside type="caution" title="Upgrading from 0.1.0?">
+The plugin was renamed `qa-catalog` → `qa-my-app` in v1.0.0, so this is a reinstall rather than an update:
+
+```text
+/plugin uninstall qa-catalog@qa-my-app
+/plugin install qa-my-app@qa-my-app
+```
+
+Every command moves from `/qa-catalog:*` to `/qa-my-app:*`. Your generated `QA-tests/` directory is **untouched** — catalog, fingerprints, results history, and `auth.local.json` all keep working, so there's no need to re-run `init`.
+</Aside>
+
 ## What the three commands do
 
 <Steps>
@@ -30,7 +41,9 @@ That's it — the plugin is installed at **user scope** (available in every repo
 Verify it loaded by opening the plugin manager with `/plugin` and looking at the **Installed** tab — you should see **QA My App** with skills `init`, `scan`, `sync`, `status`, `run`, `run-all`, `verify`. Errors (if any) show up under the **Errors** tab.
 
 <Aside type="note" title="Namespacing">
-Slash commands are exposed under the `qa-my-app:` namespace (the plugin's internal id) — e.g. `/qa-my-app:run-all`. The brand is QA My App; the namespace is a Claude Code plumbing detail.
+Slash commands are exposed under the `qa-my-app:` namespace — e.g. `/qa-my-app:run-all`. As of v1.0.0 the namespace, the plugin id, the marketplace, and the brand are all the same word.
+
+Two of the seven don't need typing at all: `status` and `verify` are model-invocable, so asking "is QA set up?" or "verify what I changed" reaches them directly. The other five only run when you type them — see [Commands](/qa-my-app/reference/commands/).
 </Aside>
 
 ## Local development / contributing
