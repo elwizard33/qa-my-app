@@ -13,9 +13,17 @@ permissions:
 
 jobs:
   validate:
-    name: claude plugin validate --strict
+    name: validate + test (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        # plugin.json declares engines.node >= 20, so 20 is the floor we promise
+        # and must keep green. 22 is Active LTS. Testing both catches version-gated
+        # API differences — e.g. `node --test` only accepts glob patterns on 21+,
+        # which is why the suite is invoked with an expanded file list.
+        node: ['20', '22']
     steps:
       # Actions pinned by commit SHA per GitHub's supply-chain guidance.
       # Bump SHAs alongside the version comment when upgrading.
@@ -27,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node }}
 
       - name: Validate marketplace manifest (strict)
         run: npx -y @anthropic-ai/claude-code plugin validate . --strict
@@ -45,8 +53,11 @@ jobs:
       # Behavioural tests for the deterministic Node helpers — the drift
       # detector, the result-schema gate, and the credential resolver. Built on
       # node:test so the repo keeps its zero-dependency posture.
+      # The glob is intentionally unquoted: Node only accepts glob patterns for
+      # --test from v21, so the shell expands it into an explicit file list that
+      # every supported Node version understands.
       - name: Run the script test suite
-        run: node --test "tests/*.test.mjs"
+        run: node --test tests/*.test.mjs
 
       - name: Verify marketplace source paths resolve to a real plugin
         run: |
