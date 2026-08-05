@@ -61,10 +61,6 @@ export default defineConfig({
             { label: 'Stagehand / Browserbase', slug: 'browsers/stagehand' },
           ],
         },
-        {
-          label: 'Publishing',
-          items: [{ label: 'Publish to a marketplace', slug: 'publishing' }],
-        },
       ],
     }),
   ],

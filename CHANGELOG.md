@@ -6,6 +6,9 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+### Removed
+- **"Publish to a marketplace" page removed from the docs site.** The site is for people learning to *use* the plugin; how the plugin itself gets distributed is maintainer content. Its (corrected) contents moved to `CONTRIBUTING.md` under **Distribution channels**, next to the release process. The old page also carried a wrong submission URL.
+
 ### Added
 - **Test suite — 46 behavioural tests** under `tests/`, run in CI on every push. Covers the deterministic Node helpers: `auth-resolve.mjs` (11), `verify-result.mjs` (15), `catalog-diff.mjs` (8), `fingerprint.mjs` (5), `detect-framework.mjs` (7). Built on the stdlib `node:test` runner — `npm test` requires no install, and the plugin keeps shipping zero dependencies. Tests assert on stdout JSON **and** exit codes, since several scripts signal through the exit code. Previously CI ran `node --check` only, which validates syntax rather than behaviour.
 - `.github/PULL_REQUEST_TEMPLATE.md` — `CONTRIBUTING.md` had instructed contributors to "fill in the template" since the repo's first release, but none existed.

@@ -114,6 +114,42 @@ docs](https://code.claude.com/docs/en/plugin-marketplaces#version-resolution),
 pinned `version` means users only update on bump — the CHANGELOG is therefore
 the canonical source of truth for what each release changes.
 
+## Distribution channels
+
+This repo is a **self-marketplace**: `.claude-plugin/marketplace.json` points
+`source: "./"` at the plugin root, so the same repo is both the plugin and a
+one-plugin catalog. Three ways it reaches users:
+
+**A — This repo, directly.** Works today, no approval needed:
+
+```text
+/plugin marketplace add elwizard33/qa-my-app
+/plugin install qa-my-app@qa-my-app
+```
+
+**B — The Anthropic community marketplace** (`@claude-community`). Submit at
+[platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit)
+— the Console form. The
+[claude.ai form](https://claude.ai/admin-settings/directory/submissions/plugins/new)
+requires a Team or Enterprise organization with directory-management access.
+The review pipeline runs `claude plugin validate` (the same check as
+`npm run validate`) plus automated safety screening. On approval the plugin is
+pinned to a commit SHA in
+[`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community)
+and CI bumps the pin as commits land; the public catalog syncs **nightly**, so
+expect a lag. Never open a PR against that repo — it's a read-only mirror and
+PRs auto-close.
+
+**C — `claude-plugins-official`.** Curated by Anthropic at its discretion.
+[There is no application process](https://code.claude.com/docs/en/plugins#submit-your-plugin-to-the-community-marketplace),
+and the submission form does **not** feed it — only a partner contact can
+arrange a listing.
+
+> Platform support is **Claude Code only**. Cowork supports hooks, subagents, and
+> local MCP servers, but every skill here shells out to `Bash(node *)` — and four
+> to `Bash(git *)` — against a git checkout with a dev server on localhost, which
+> is not Cowork's surface.
+
 ## Testing
 
 The nine helpers under `scripts/` are the deterministic backbone of the plugin —
