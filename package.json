@@ -1,6 +1,6 @@
 {
   "name": "qa-my-app",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Dev-only manifest for the QA My App plugin's test suite. The plugin itself ships no dependencies and is not an npm package.",
   "license": "MIT",

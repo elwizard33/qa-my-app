@@ -1,6 +1,6 @@
 ---
 title: Subagents
-description: The five subagents and where each runs.
+description: The six subagents and where each runs.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -12,6 +12,7 @@ import { Aside } from '@astrojs/starlight/components';
 | `qa-my-app:test-author` | plugin | Pure markdown — converts page analysis into task files using the enforced template. Reads the route source directly for exact validation rules; happy paths fill every field and **submit for real**. Accepts ticket acceptance criteria and emits an `## Acceptance criteria` block. | `Read, Write, Edit, Glob` |
 | `qa-test-runner` | **project** | Browser-driving execution of one task → date-stamped `result.md` with embedded screenshots. **Fills and submits every form/dialog for real** and asserts the result; only destructive actions stay gated behind explicit task authorization. Designed for parallel fan-out, one isolated browser per runner. | inherits all except destructive Bash patterns |
 | `qa-my-app:catalog-reconciler` | plugin | Plans add/update/delete for `catalog.json` from the drift report. | `Read, Grep, Glob` |
+| `qa-my-app:result-reviewer` | plugin | Vision adjudicator — reads `result.md` claims, views the referenced screenshots, and returns a per-task `confirmed`/`mismatch` verdict. Owns the **Spot-check contract** that `run`/`run-all`/`verify` follow; those skills delegate to it when a batch's spot-check image set exceeds 12 images. | `Read, Glob` |
 
 <Aside type="note" title="Why two project-scope agents">
 The two browser-driving agents live at project scope because plugin-shipped subagents cannot declare inline `mcpServers` (silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). `/qa-my-app:init` Phase 0 copies them into `.claude/agents/` so every parallel spawn gets its own dedicated browser process. Commit them so the whole team shares the same browser-agent versions.

@@ -1,10 +1,8 @@
 ---
-description: Run end-to-end tests for some or all pages in this app. Asks the user which routes/tasks to cover (or accepts a filter argument), builds a persistent task-queue index for the run, dispatches batches of test-runner subagents in parallel, verifies each returned result.md against the schema, retries verification failures once, then writes a final cross-task report. Use after a sprint, after a dependency bump, or before a release.
-when_to_use: |
-  Use to run the full test suite, perform a regression test across all routes, or re-run only failed or changed tasks before a release. Trigger phrases include "run all tests", "full regression", "run the full test suite", "test everything", "run qa", "run all qa tests", "regression before release", and "run failed tests".
+description: Run end-to-end tests for some or all pages in this app. Asks the user which routes/tasks to cover (or accepts a filter argument), builds a persistent task-queue index for the run, dispatches batches of test-runner subagents in parallel, verifies each returned result.md against the schema and its screenshots against their claims (vision spot-check), retries verification failures once, then writes a final cross-task report. Use after a sprint, after a dependency bump, or before a release.
 argument-hint: [task-filter]
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner)
+allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
 ---
 
 # /qa-my-app:run-all — Full-platform parallel test run
@@ -167,19 +165,25 @@ Repeat:
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-result.mjs" "<runRoot>/<taskId>"
    ```
-   The script returns a single-line JSON `{ taskId, valid, issues, parsed }` (exit 0/1) and is the authority on schema validity (header fields, `PASS|FAIL|BLOCKED` verdicts, screenshot resolution, defect ids). Trust its `valid` flag and `issues` — do not re-validate `result.md` yourself.
+   The script returns a single-line JSON `{ taskId, valid, issues, warnings, parsed }` (exit 0/1) and is the authority on schema validity (header fields, `PASS|FAIL|BLOCKED` verdicts, screenshot resolution, defect ids). Trust its `valid` flag and `issues` — do not re-validate `result.md` yourself. Keep `warnings` (e.g. `PASS with console errors`, identical/blank captures) — it sets the vision depth in the next step.
 
-6. **Update the queue:**
-   - **If valid** → set `status = "complete"`, copy `parsed.{result → verdict, tcCount, passCount, failCount, blockedCount, screenshotsOnDisk → screenshots, consoleErrors, networkFailures, defects}` onto the task entry, `finishedAt = <ISO-8601>`.
-   - **If invalid AND `attempt < 2`** → set `status = "pending"`, record `verificationIssues = issues`. The loop will pick it back up and re-dispatch with a fresh `contextId`.
-   - **If invalid AND `attempt === 2`** → set `status = "failed-verification"`, `verdict = "BLOCKED"`, persist `verificationIssues`. The runner produced unparseable output twice — that's a real defect and gets surfaced in the summary.
+6. **Vision spot-check the batch.** Mechanical verification proves the files exist; it cannot prove the pixels agree with the verdict. Apply the **Spot-check contract** in [`agents/result-reviewer.md`](../../agents/result-reviewer.md):
+   - Image set per verified task: every screenshot referenced by a FAIL/BLOCKED TC section; for a PASS task, its last embedded screenshot; for any task whose step-5 JSON carried `warnings`, also its first embedded screenshot.
+   - **≤ 12 images in the batch** → `Read` them yourself in the supervisor and compare each against the claim in `result.md` (toast text, new row, error banner, correct route — never a blank/loader/login-wall frame unless the task expects it).
+   - **> 12 images** → fan out `Agent(qa-my-app:result-reviewer)` in batches up to `parallel_test_runners` with payload `{ "runRoot": "<runRoot>", "mode": "standard", "warningsByTask": {...from step 5...}, "tasks": [{ "taskId", "dir", "verdict" }] }`. Each returns one JSON line of `[{"taskId","verdict":"confirmed|mismatch","imagesReviewed":N,"mismatches":[...]}]`.
+   - A `mismatch` is handled exactly like an invalid result in step 7 below — including its `vision: <file> — <note>` lines in `verificationIssues`.
+
+7. **Update the queue:**
+   - **If valid AND vision confirmed** → set `status = "complete"`, copy `parsed.{result → verdict, tcCount, passCount, failCount, blockedCount, screenshotsOnDisk → screenshots, consoleErrors, networkFailures, defects}` onto the task entry, `finishedAt = <ISO-8601>`.
+   - **If invalid OR vision mismatch, AND `attempt < 2`** → set `status = "pending"`, record `verificationIssues = issues` plus any vision mismatch lines. The loop will pick it back up and re-dispatch with a fresh `contextId`.
+   - **If invalid OR vision mismatch, AND `attempt === 2`** → set `status = "failed-verification"`, `verdict = "BLOCKED"`, persist `verificationIssues` (mechanical + vision). The runner produced unparseable output or unconvincing evidence twice — that's a real defect and gets surfaced in the summary.
    - Save `task-queue.json` after every transition, **and immediately** re-run:
      ```bash
      node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.mjs" "<runRoot>"
      ```
      so the open browser tab picks up the new state on its next auto-refresh tick.
 
-7. **Loop.**
+8. **Loop.**
 
 ### Phase 3 — Final report
 
@@ -219,6 +223,7 @@ Once the loop exits, derive the summary from `task-queue.json` only (single sour
 ## Verification failures
 - T07-orders-bulk (attempt 1): no `### TC-NN ... — PASS|FAIL|BLOCKED` headers found
 - T07-orders-bulk (attempt 2): screenshot file(s) missing on disk: TC03-confirm.png
+- T03-customers-edit (attempt 2): vision: TC02-submit.png shows an inline error banner but the result claims PASS
 ```
 
 ### Phase 4 — Append to history index + final dashboard render
@@ -250,6 +255,6 @@ QA My App run-all  <runId>
 - **`task-queue.json` is the source of truth during the run.** Read it before every dispatch, write it after every state transition. The summary at the end is derived from it.
 - **Always launch full-parallel batches up to `parallel_test_runners`.** Do NOT serialize unless the work list has exactly one task.
 - **One retry on verification failure**, no retry on runner exception (that's `BLOCKED` immediately — the runner couldn't even start).
-- A task is **not** "complete" until `verify-result.mjs` says so. The runner's self-report is advisory, not authoritative.
+- A task is **not** "complete" until `verify-result.mjs` says so **and** the Phase 2 vision spot-check confirms the screenshots agree with the verdict. The runner's self-report is advisory, not authoritative.
 - Never modify `QA-tests/tasks/*.md` during a run — those are the input contract.
 - Never edit historical runs — `task-queue.json` belongs to its own run dir; `history.json` is append-only.

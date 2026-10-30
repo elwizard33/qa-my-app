@@ -50,4 +50,4 @@ Each `run`, `run-all`, and `verify` invocation writes a self-contained, auto-ref
 
 ## Why the supervisor lives in the skill layer
 
-Subagents cannot spawn other subagents (per Claude docs). The `run-all` parallel orchestrator therefore lives in the **skill** (main session), which fans work out to N `qa-test-runner` subagents in batches, awaits each batch, verifies each `result.md` against the schema, retries failed verifications once, and then writes the cross-task `summary.md`.
+Subagents cannot spawn other subagents (per Claude docs). The `run-all` parallel orchestrator therefore lives in the **skill** (main session), which fans work out to N `qa-test-runner` subagents in batches, awaits each batch, verifies each `result.md` against the schema **and against its screenshot evidence (the vision spot-check)**, retries failed verifications once, and then writes the cross-task `summary.md`.

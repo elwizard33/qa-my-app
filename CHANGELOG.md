@@ -6,15 +6,32 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-30
+
+Vision verification (Pass 9): test results are now checked against their own
+screenshot evidence, mechanically and visually, plus the run dashboard's
+screenshot gallery and the audit's convention cleanups.
+
 ### Removed
 - **"Publish to a marketplace" page removed from the docs site.** The site is for people learning to *use* the plugin; how the plugin itself gets distributed is maintainer content. Its (corrected) contents moved to `CONTRIBUTING.md` under **Distribution channels**, next to the release process. The old page also carried a wrong submission URL.
+- **Dead `when_to_use` trigger blocks on the five slash-only skills** (`init`, `scan`, `sync`, `run`, `run-all`). `disable-model-invocation: true` removes a skill's description from Claude's context entirely, so those trigger phrases could never fire; only the model-invocable `status` and `verify` keep theirs.
 
 ### Added
-- **Test suite — 46 behavioural tests** under `tests/`, run in CI on every push. Covers the deterministic Node helpers: `auth-resolve.mjs` (11), `verify-result.mjs` (15), `catalog-diff.mjs` (8), `fingerprint.mjs` (5), `detect-framework.mjs` (7). Built on the stdlib `node:test` runner — `npm test` requires no install, and the plugin keeps shipping zero dependencies. Tests assert on stdout JSON **and** exit codes, since several scripts signal through the exit code. Previously CI ran `node --check` only, which validates syntax rather than behaviour.
+- **Vision verification — screenshots now have to prove the verdict.** Three layers: (1) `qa-test-runner` inspects every screenshot as it is captured (the tool returns the image inline) and lets the image override a disagreeing accessibility snapshot (`visual-mismatch` → FAIL); (2) `run`, `run-all`, and `verify` gained a vision spot-check phase that `Read`s the FAIL/BLOCKED evidence plus each PASS's final screenshot (first + last when `verify-result.mjs` returns warnings) and treats a `mismatch` exactly like a schema failure through the same one-retry path; (3) new plugin subagent **`qa-my-app:result-reviewer`** (`agents/result-reviewer.md`) owns the canonical Spot-check contract and takes over above 12 spot-check images per batch so the supervisor's context never fills with pixels.
+- **Screenshot gallery in `report.html`** — a collapsible per-task thumbnail grid (relative links, lazy-loaded, click to open full size); references missing on disk are labeled instead of silently dropped. New `tests/render-report.test.mjs` (3 tests).
+- **Page-analyzer screenshots feed test authoring** — the analyzer saves a settled-page capture to `QA-tests/.qa-catalog/analyses/<route-slug>.png` (absolute path) and reports it as `screenshot`; `test-author` reads the image before writing tasks to pin exact visual expectations (toast position, column order, empty-state text).
+- **Test suite — 54 behavioural tests** under `tests/`, run in CI on every push. Covers the deterministic Node helpers: `auth-resolve.mjs` (11), `verify-result.mjs` (20), `catalog-diff.mjs` (8), `fingerprint.mjs` (5), `detect-framework.mjs` (7), `render-report.mjs` (3). Built on the stdlib `node:test` runner — `npm test` requires no install, and the plugin keeps shipping zero dependencies. Tests assert on stdout JSON **and** exit codes, since several scripts signal through the exit code. Previously CI ran `node --check` only, which validates syntax rather than behaviour.
 - `.github/PULL_REQUEST_TEMPLATE.md` — `CONTRIBUTING.md` had instructed contributors to "fill in the template" since the repo's first release, but none existed.
 - `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1) with a reporting address.
 - Root `package.json` — dev-only, `private: true`, no dependencies. Provides `npm test`, `npm run test:watch`, `npm run check`, and `npm run validate`. Does not affect plugin loading.
 - `CONTRIBUTING.md` gains a `## Testing` section covering how the temp-project fixtures work and why exit codes are asserted.
+
+### Changed
+- **`verify-result.mjs` output now carries `warnings` alongside `issues`.** New blocking cross-checks: the `Screenshots` header count must match both the embedded `![](...)` refs and the image files on disk. New non-blocking signals (exit code still keys off `issues` alone): PASS with console errors, PASS/FAIL with zero visual evidence (gated to playwright/chrome-devtools engines so stagehand stays quiet), referenced files under 1 KB (blank capture), and ≥3 byte-identical screenshots (stale capture). Warnings set how deep the vision spot-check goes instead of blocking the dispatch queue. +5 tests.
+
+### Fixed
+- **`PostToolUse` hook matcher** dropped `MultiEdit` — Claude Code no longer ships that tool, so the alternation was dead weight (`Write|Edit`).
+- **`AGENTS.md` rule 2** now records the real `effort` range (`low | medium | high | xhigh | max` per current docs); the older `low|medium|high` restriction recorded as audit finding F-023 is marked superseded (F-092) — historical audit entries left untouched.
 
 ## [1.0.0] — 2026-08-05
 

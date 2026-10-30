@@ -1,10 +1,8 @@
 ---
-description: Execute a single QA task end-to-end via the qa-test-runner subagent (project-level, installed by /qa-my-app:init). Writes a date-stamped result.md with per-TC pass/fail, embedded screenshots, console errors, and network failures, then appends to QA-tests/results/history.json. Argument is the task id (e.g. T03 or T03-customers-create).
-when_to_use: |
-  Use to execute a single QA task, test one specific page or user flow, or re-run a previously failing test case in the browser. Trigger phrases include "run task", "test this page", "run T01", "execute a test", "run one qa test", and "test the customers page".
+description: Execute a single QA task end-to-end via the qa-test-runner subagent (project-level, installed by /qa-my-app:init). Writes a date-stamped result.md with per-TC pass/fail, embedded screenshots, console errors, and network failures, verifies it mechanically (verify-result.mjs) and against its screenshot evidence (vision spot-check), then appends to QA-tests/results/history.json. Argument is the task id (e.g. T03 or T03-customers-create).
 argument-hint: <task-id>
 disable-model-invocation: true
-allowed-tools: Read, Glob, Write, Edit, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner)
+allowed-tools: Read, Glob, Write, Edit, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
 ---
 
 # /qa-my-app:run — Execute one task
@@ -81,7 +79,19 @@ Spawn the project-level agent **`qa-test-runner`** with this payload:
 
 The runner writes `<runDir>/result.md` and embeds every screenshot inline.
 
-### Phase 3 — Append to the run history + render dashboard
+### Phase 3 — Verify + vision spot-check
+
+**Mechanical gate.** Run:
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-result.mjs" "<runDir>"
+```
+Trust its `valid` / `issues` — do not re-validate the schema yourself — and hold on to its `warnings` array; it decides how deep the vision review goes below.
+
+**Vision spot-check.** Apply the **Spot-check contract** in [`agents/result-reviewer.md`](../../agents/result-reviewer.md): for this single task, `Read` every screenshot referenced by a FAIL/BLOCKED TC; for a PASS, its last embedded screenshot — plus the first one when the gate returned `warnings` — and check each image against the claim in `result.md` (toast text, new row, error banner, correct route — never a blank/loader/login-wall frame unless the task expects one). A single-task image set is always small: review it directly here, do not spawn `qa-my-app:result-reviewer` for one task.
+
+**One retry.** If the gate is invalid **or** the vision check reports a `mismatch`: re-dispatch `qa-test-runner` once with the same payload (attempt 2), then re-run the gate and the spot-check. If it fails again, stop retrying — continue to Phase 4 so history and the dashboard still record what happened, and lead Phase 5's summary with the verification/vision failure instead of the runner's claimed verdict.
+
+### Phase 4 — Append to the run history + render dashboard
 Run, in order:
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/results-index.mjs" append "QA-tests/results/runs/<runId>"
@@ -89,7 +99,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.mjs"   "QA-tests/results/runs/
 ```
 The first updates `QA-tests/results/history.json`, `QA-tests/results/latest.json`, and `QA-tests/results/by-task/<taskId>/latest.json`. The second writes `QA-tests/results/runs/<runId>/report.html` — a self-contained HTML dashboard for the run (single-task runs render with auto-refresh off since the work is already done by the time we get here).
 
-### Phase 4 — Print summary
+### Phase 5 — Print summary
 Print the runner's single-line JSON summary plus the absolute paths to both `result.md` and `report.html`.
 
 ## Result schema (enforced by the runner)

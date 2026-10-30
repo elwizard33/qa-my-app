@@ -1,7 +1,7 @@
 # QA My App
 
 <p align="center">
-  <img src="assets/banner.png" alt="QA My App — autonomous end-to-end QA as a Claude Code plugin" width="100%" />
+  <img src="assets/banner.png" alt="QA My App — persistent, change-aware QA for your codebase" width="100%" />
 </p>
 
 [![Validate plugin](https://github.com/elwizard33/qa-my-app/actions/workflows/validate.yml/badge.svg)](https://github.com/elwizard33/qa-my-app/actions/workflows/validate.yml)
@@ -9,70 +9,222 @@
 [![plugin validate --strict](https://img.shields.io/badge/plugin%20validate-strict-success)](https://code.claude.com/docs/en/plugins-reference)
 [![tests](https://img.shields.io/badge/tests-46%20passing-success)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](CHANGELOG.md)
 
-> **End-to-end QA testing as a Claude Code plugin.** Drop it into any web-app repo and Claude detects the framework, walks every page in a real browser, drives every form / modal / button / role gate, runs the whole platform in parallel, and reports back with screenshots, console logs, network traces, and filed defects. No test code to write, no fixtures to wire — the plugin understands your app from the source.
+> ### Your code changes. Your QA follows.
+>
+> Most AI testing starts from zero every time: inspect the app, decide what should
+> be tested, generate a plan, run it — then do it all again tomorrow.
+>
+> **QA My App works differently.**
+>
+> It understands your application **once** and writes a persistent, version-controlled
+> QA catalog that lives beside your code. From then on, you and your agents select
+> what to test instead of re-explaining the same flows over and over.
+>
+> When the application changes, QA My App detects which parts of the catalog are
+> affected — so your QA evolves with the product instead of quietly going stale.
 
-**At a glance:** 7 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · zero test code to write.
+```text
+/plugin marketplace add elwizard33/qa-my-app
+/plugin install qa-my-app@qa-my-app
+```
 
 > 📖 **Full documentation:** [elwizard33.github.io/qa-my-app](https://elwizard33.github.io/qa-my-app/) — install guide, quickstart, command reference, authentication, browser engines, and architecture.
 
+---
+
+## Why QA My App is different
+
+<table>
+<tr><th width="50%">Traditional AI QA</th><th width="50%">QA My App</th></tr>
+<tr valign="top"><td>
+
+```text
+Change code
+   ↓
+Explain what to test
+   ↓
+Agent explores the app
+   ↓
+Agent invents tests
+   ↓
+Run
+   ↓
+Throw it all away
+   ↓
+Repeat tomorrow
+```
+
+</td><td>
+
+```text
+Understand the app once
+   ↓
+Build a QA catalog
+   ↓
+Change code
+   ↓
+Detect affected features
+   ↓
+Reuse / update that QA
+   ↓
+Run exactly what matters
+   ↓
+Catalog persists
+```
+
+</td></tr>
+</table>
+
+The difference isn't how well the agent drives a browser. It's that **the knowledge
+of what your app should do survives the session.**
+
+---
+
+## 🧠 The game changer: QA that remembers your application
+
+AI agents are good at testing applications. The wasteful part is making them work
+out **what should be tested** every single time.
+
+QA My App separates those two jobs.
+
+### 1. Understand once
+
+It explores your application, reads the source, and discovers routes, roles, forms,
+validation rules, dialogs, interactions, and the flows that matter.
+
+### 2. Turn that understanding into a catalog
+
+Instead of discarding that knowledge when the session ends, it's written to
+`QA-tests/` — a persistent, reviewable map of how your application is supposed to
+behave. It's committed with your code, so it diffs in PRs like anything else.
+
+### 3. Reuse it
+
+Next time you need QA, you don't write another wall of prompt:
+
+> *"Log in as admin, open customers, create one, check the validation, edit it,
+> make sure the modal closes properly…"*
+
+Those flows already exist. Run one task, several, a whole route, everything that
+failed last time, or everything your current changes touched.
+
+```text
+"What QA do we have for /customers?"
+
+T12  Customer list
+T13  Customer creation
+T14  Customer validation
+T15  Customer editing
+T16  Customer deletion
+T17  Customer permissions
+
+"Run T13, T14 and T17"
+```
+
+### 4. Keep it synchronized with the product
+
+The catalog is fingerprinted against the source it describes. When that source
+changes, QA My App flags which parts of the catalog may no longer match reality —
+so your test knowledge evolves with the app instead of rotting in place.
+
+---
+
+## Stop rewriting QA prompts
+
+Your QA instructions shouldn't live in your head, in Slack messages, in tickets, or
+in yesterday's Claude conversation.
+
+QA My App turns them into **reusable assets**. Once a flow is in the catalog, any
+developer or agent can find it, run it, update it, and compare its results across
+changes.
+
+---
+
+## ✨ Latest update — QA that follows your changes
+
+QA My App is moving beyond generating and running tests. It now understands **what
+changed**.
+
+### 🔎 Change-scoped verification
+
+```text
+/qa-my-app:verify
+```
+
+Looks at your current Git changes, maps them back to the affected routes and their
+existing QA tasks, and runs only the relevant QA instead of blindly executing the
+whole suite. You can scope it to the working tree, staged changes, a whole
+branch/PR, a single route, or the acceptance criteria of a connected issue.
+
+### 🧠 Persistent QA catalog
+
+QA knowledge lives under `QA-tests/` instead of being recreated for every AI
+session. Your team builds the catalog once and selects from it whenever QA is
+needed.
+
+### 🛡️ QA drift detection
+
+The catalog is fingerprinted against the source it describes. When application code
+changes, Claude session hooks surface the drift and the Git pre-commit guard can
+block stale QA definitions from being committed.
+
+### ⚡ Test only what changed
+
+Changed files are mapped back to their affected routes and tasks. Instead of
+*change one screen → rerun the entire application*, you get *change one screen →
+identify its QA → verify that scope*.
+
+### 🤖 Coming next: self-updating QA coverage
+
+> **Not yet implemented — this is the roadmap for the next release.**
+> Today, drift detection tells you a cataloged route's source *changed*; it does not
+> judge whether the change matters, and new routes are only discovered when you run
+> `/qa-my-app:sync`.
+
+The next step is for QA My App to weigh whether a change is behaviourally
+significant, compare it against existing coverage, and author new catalog tasks for
+behaviours nothing tests yet.
+
+**Change the app → QA understands the change → the catalog evolves with it.**
+
+#### Also available
+
+46 automated behavioural tests for QA My App itself · change-scoped `/verify` ·
+per-role authentication · real form submissions with observable-result assertions ·
+GitHub / Jira / Azure DevOps acceptance-criteria verification · isolated browser
+agents · reduced Claude context overhead · pinned browser MCP versions for
+reproducible execution.
+
+---
+
+## How it works
+
+```text
+Understand  →  Catalog  →  Change  →  Scope  →  Test  →  Learn
+     │            │           │         │         │        │
+  read the    QA-tests/    you edit  map diff  run only  results +
+  source +    committed    the app   → routes  what's    history
+  the browser  to git                → tasks   affected  in-repo
+```
+
+1. **Detect the framework** — Next.js, Remix, SvelteKit, Angular, Vue, Vite+React, Blazor, Flutter web, plain HTML.
+2. **Discover every route** statically from the source tree, with auth/role/guard/HTTP-method metadata.
+3. **Open each page** in a real browser and inventory every form field, validator, button, modal, dialog, tab, and table.
+4. **Author deep test tasks** into `QA-tests/tasks/` using an enforced template — happy path + validation matrix + modal coverage + button coverage + edge cases.
+5. **Watch the codebase** via SessionStart + PostToolUse hooks and a Git pre-commit hook, so drift surfaces the moment a cataloged route's source changes.
+6. **Run one task, a subset, or everything in parallel.** Each spawn writes a date-stamped `result.md` with embedded screenshots, plus a run summary and an append-only history index.
+
+This plugin is project-agnostic — no app-specific assumptions.
+
 ## Contents
 
-- [Install](#install) · [Quickstart](#quickstart) · [When to use it](#when-to-use-qa-my-app)
-- [The task catalog](#the-task-catalog-how-qa-my-app-keeps-runs-deterministic) · [What `/qa-my-app:init` does](#what-happens-during-qa-my-appinit) · [Issue trackers](#connecting-issue-trackers-github--jira--azure-devops)
+- [Install](#install) · [Quickstart](#quickstart) · [What it can test](#what-it-can-test) · [When to use it](#when-to-use-qa-my-app)
+- [What `/qa-my-app:init` does](#what-happens-during-qa-my-appinit) · [Issue trackers](#connecting-issue-trackers-github--jira--azure-devops)
 - [Generated layout](#generated-layout-in-the-target-project) · [Architecture](#architecture) · [Subagents](#subagents) · [Frameworks](#supported-frameworks)
 - [Settings](#settings-userconfig) · [Auth](#authenticating-protected-routes) · [Browser engines](#browser-engines) · [Customization](#customization) · [Compliance](#claude-code-compliance-notes)
 - [Status](#status) · [Changelog](CHANGELOG.md) · [Audit log](docs/AUDIT.md) · [Architecture deep-dive](docs/ARCHITECTURE.md)
-
----
-
-## What QA My App does
-
-- **Auto-discovers your stack and routes.** Next.js, Remix, SvelteKit, Angular, Vue, Vite+React, Blazor, Flutter web, plain HTML — if it serves HTTP it's testable. Languages, package manager, build tool, UI libs, state stores, validators and existing test frameworks are detected too.
-- **Drives every page in a real browser.** A dedicated browser MCP per agent, isolated contexts, every form field probed for validation, every modal opened, every destructive button rehearsed. Browser-engine agnostic — Playwright by default, with Chrome DevTools and Stagehand/Browserbase as drop-in alternatives (see [docs/browsers/](docs/browsers/README.md)).
-- **Runs end-to-end at platform scale.** Parallel browser agents fan out across the whole app. A 30-route SPA full regression goes from ~40 minutes serial to ~7 minutes at `parallel_test_runners: 6`.
-- **Files real defects.** Hook up GitHub, Jira, or Azure DevOps via MCP and the runner files failures directly as issues / tickets / work items with screenshots and reproduction steps attached.
-- **Stays in sync with your code.** A Git pre-commit hook + Claude session hooks fingerprint every analysed source file and flag drift the moment a UI changes, so the next run tests **what the UI actually does** — not a stale plan.
-- **Reviewable, replayable runs.** Every run lands in `QA-tests/results/runs/<UTC-timestamp>/` with a schema-rigid `result.md` per task, embedded screenshots, and an append-only `history.json`. Diff runs, find regressions by task id, ship a PR with the failing screenshots embedded.
-- **Live HTML dashboard, zero setup.** Every run also writes a self-contained `report.html` (auto-refresh while in flight, refresh disabled once complete). Double-click to open in a browser and watch the queue drain in real time — no server, no install, no dependencies.
-
-### When to use QA My App
-
-| Use it when… | Use something else when… |
-|---|---|
-| You want broad test coverage with zero test code | You need component-level unit tests — use Jest / Vitest |
-| Your app is web-based and serves HTTP | You're testing a native binary, a CLI, or a mobile app |
-| You want PR-reviewable regression diffs (same input → same plan → same outputs) | You need one-shot smoke checks with no persistence — use a Playwright recorder directly |
-| You want a deterministic catalog committed to your repo | You want fully model-derived ad-hoc test plans on every run |
-| You want every failure filed automatically as a GitHub / Jira / ADO defect | You don't have an issue tracker connected and don't want one |
-
----
-
-## The task catalog (how QA My App keeps runs deterministic)
-
-Most "AI testing" tools re-derive *what to test* on every run — slow, non-deterministic, impossible to review. QA My App separates **understanding the app** from **running the tests** by persisting an in-repo **task catalog** under `QA-tests/`:
-
-1. **Discover once, test forever.** The catalog is a versioned source of truth for what every page is supposed to do — every form field, every validator, every modal, every destructive button, every role gate. It lives in your repo so reviewers can read it like documentation.
-2. **Standardised surface.** Every route has the same canonical task shapes — happy path, validation matrix, modal coverage, button coverage, edge cases. The runner parses and executes them deterministically.
-3. **Drift-aware.** Fingerprints + hooks flag the moment a UI changes so the catalog is rebuilt only where needed.
-4. **Parallel by construction.** Because tasks are uniform, the orchestrator can fan them out across N browser agents without coordination overhead.
-5. **Diffable history.** Same input → same plan → same outputs → diff across commits.
-
-The catalog is the engine room. You don't have to look at it — but it's why subsequent runs are fast, deterministic, and PR-reviewable.
-
----
-
-## What this plugin does
-
-1. **Detect the framework** (Next.js, Remix, SvelteKit, Angular, Vue, Vite+React, Blazor, Flutter web, plain HTML).
-2. **Discover every route** statically from the source tree, with auth/role/guard/HTTP-method metadata.
-3. **Open each page** in a real browser via the configured browser engine (Playwright by default) and inventory every form field, validator, button, modal, dialog, tab, and table.
-4. **Author deep test tasks** into `QA-tests/tasks/` using an enforced template — happy path + validation matrix + modal coverage + button coverage + edge cases.
-5. **Watch the codebase** via SessionStart + PostToolUse hooks and a Git pre-commit hook. When a route's source drifts from the catalog, you're nudged (or commits are blocked) until you run `/qa-my-app:sync`.
-6. **Run one task, a subset, or every task in parallel** with `/qa-my-app:run` / `/qa-my-app:run-all`. Each spawn writes a date-stamped `result.md` with embedded screenshots, plus a top-level run summary and an append-only history index.
-
-This plugin is project-agnostic — no app-specific assumptions.
 
 ---
 
@@ -148,6 +300,31 @@ The local copy takes precedence over any installed marketplace version for that 
 ```
 
 Every `/qa-my-app:run`, `/qa-my-app:run-all`, or `/qa-my-app:verify` invocation writes a self-contained dashboard at `QA-tests/results/runs/<runId>/report.html`. Open it in a browser while the run is in flight — the page meta-refreshes every 3 seconds and shows the queue draining live (pending → dispatched → complete, with per-task verdicts, defects, and links to `result.md`). Once the run finishes, the auto-refresh disables itself and the same file becomes the canonical browse view for that run.
+
+---
+
+## What it can test
+
+- **Auto-discovers your stack and routes.** Next.js, Remix, SvelteKit, Angular, Vue, Vite+React, Blazor, Flutter web, plain HTML — if it serves HTTP it's testable. Languages, package manager, build tool, UI libs, state stores, validators and existing test frameworks are detected too.
+- **Drives every page in a real browser.** A dedicated browser MCP per agent, isolated contexts, every form field probed for validation, every modal opened, every destructive button rehearsed. Browser-engine agnostic — Playwright by default, with Chrome DevTools and Stagehand/Browserbase as drop-in alternatives (see [docs/browsers/](docs/browsers/README.md)).
+- **Actually submits.** Happy-path tasks fill every field with real data and submit for real, then assert the observable result — the success toast, the new row, the error banner. Only destructive actions (delete/purge) are gated behind explicit authorization; their cancel path is always exercised.
+- **Runs end-to-end at platform scale.** Parallel browser agents fan out across the whole app. A 30-route SPA full regression goes from ~40 minutes serial to ~7 minutes at `parallel_test_runners: 6`.
+- **Handles authentication.** Anonymous, a shared login, a saved Playwright session, or a different login per role — so a viewer's inability to reach an admin route is itself testable. See [Authenticating protected routes](#authenticating-protected-routes).
+- **Files real defects.** Hook up GitHub, Jira, or Azure DevOps via MCP and the runner files failures directly as issues / tickets / work items with screenshots and reproduction steps attached.
+- **Reviewable, replayable runs.** Every run lands in `QA-tests/results/runs/<UTC-timestamp>/` with a schema-rigid `result.md` per task, embedded screenshots, and an append-only `history.json`. Diff runs, find regressions by task id, ship a PR with the failing screenshots embedded.
+- **Live HTML dashboard, zero setup.** Every run also writes a self-contained `report.html` (auto-refresh while in flight, refresh disabled once complete). Double-click to open in a browser and watch the queue drain in real time — no server, no install, no dependencies.
+
+**At a glance:** 7 slash commands · 6 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations · 54 behavioural tests on the plugin itself · strict-validated by CI on every push · zero test code to write.
+
+### When to use QA My App
+
+| Use it when… | Use something else when… |
+|---|---|
+| You want broad test coverage with zero test code | You need component-level unit tests — use Jest / Vitest |
+| Your app is web-based and serves HTTP | You're testing a native binary, a CLI, or a mobile app |
+| You want PR-reviewable regression diffs (same input → same plan → same outputs) | You need one-shot smoke checks with no persistence — use a Playwright recorder directly |
+| You want a deterministic catalog committed to your repo | You want fully model-derived ad-hoc test plans on every run |
+| You want every failure filed automatically as a GitHub / Jira / ADO defect | You don't have an issue tracker connected and don't want one |
 
 ---
 
@@ -337,6 +514,7 @@ Together, these guarantee the catalog never lags behind the UI. The moment a dev
 | `qa-my-app:test-author` | plugin | Pure markdown — converts page analysis into task files using the enforced template. | `Read, Write, Edit, Glob` |
 | `qa-test-runner` | **project** (installed by `/qa-my-app:init`) | Browser-driving execution of one task → date-stamped `result.md` with embedded screenshots. Designed for parallel fan-out, one isolated browser per runner. | inherits all except destructive Bash patterns (`rm -rf *`, `git push *`, `git reset --hard *`, `git commit *`, `npm publish *`) |
 | `qa-my-app:catalog-reconciler` | plugin | Plans add/update/delete for `catalog.json` from the drift report. | `Read, Grep, Glob` |
+| `qa-my-app:result-reviewer` | plugin | Vision adjudicator — reads `result.md` claims and views the referenced screenshots, returning a per-task `confirmed`/`mismatch` verdict. Owns the canonical **Spot-check contract**; spawned by `run`/`run-all`/`verify` when a batch's spot-check image set exceeds 12 images. | `Read, Glob` |
 
 > The two browser-driving agents live at project scope because plugin-shipped subagents cannot declare inline `mcpServers` (silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). `/qa-my-app:init` Phase 0 copies them into `.claude/agents/` so every parallel spawn gets its own dedicated Playwright process. Commit them so the whole team shares the same browser-agent versions.
 
@@ -493,14 +671,15 @@ The plugin is validated against the published Claude Code contract (manifest, sk
 - Self-marketplace: `.claude-plugin/marketplace.json` follows the documented [marketplace schema](https://code.claude.com/docs/en/plugin-marketplaces) so the same repo is both the plugin source and a one-plugin catalog. Users install via `/plugin marketplace add elwizard33/qa-my-app` + `/plugin install qa-my-app@qa-my-app` — the canonical flow ([docs](https://code.claude.com/docs/en/discover-plugins)).
 - **Orchestration follows the canonical "parallel research" pattern** from the [sub-agents docs](https://code.claude.com/docs/en/sub-agents): main session = supervisor, focused subagents run in parallel and report results back. Agent teams ([docs](https://code.claude.com/docs/en/agent-teams)) were considered and rejected — they're flagged experimental, require an env-flag opt-in, and the split-pane mode needs tmux or iTerm2 ("isn’t supported in VS Code’s integrated terminal, Windows Terminal, or Ghostty"). For uniform, non-conversational work like "drive each route and write a result.md" the subagent fan-out gives the same parallelism at a fraction of the token cost and zero environmental dependencies.
 - All subagents use `model: inherit` — the user's session model is honored, never hardcoded.
-- Plugin-shipped subagents omit the banned frontmatter fields (`hooks`, `mcpServers`, `permissionMode`). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) declare inline `mcpServers` — a capability silently ignored on plugin agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) — so they run at **project scope**. To stop them from *also* loading as broken plugin-namespaced duplicates (`qa-my-app:qa-page-analyzer` with no browser, wasting session context), `plugin.json` declares an explicit `agents` allowlist of only the three true plugin subagents (`route-discoverer`, `test-author`, `catalog-reconciler`). The two browser agents ship in `agents/` purely as templates that `/qa-my-app:init` Phase 0 copies into `.claude/agents/`. Pointing the `agents` allowlist into the default `agents/` folder raises no `/doctor` warning per the [reference](https://code.claude.com/docs/en/plugins-reference#path-behavior-rules).
-- Invocation control is scoped to risk. The five skills that overwrite the catalog or spawn browser runs (`init`, `scan`, `sync`, `run`, `run-all`) set `disable-model-invocation: true` so Claude can't auto-trigger a destructive or costly operation; the read-only `status` and the change-scoped `verify` omit it so Claude can reach them from natural phrasing. Per the [skills docs](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill), that flag also removes a skill's description from context entirely — so a `when_to_use` block on a manual-only skill is inert by design, not an oversight.
-- All workflow skills declare every spawned agent in `allowed-tools` — plugin-scope ids (`Agent(qa-my-app:route-discoverer)`, `Agent(qa-my-app:test-author)`, `Agent(qa-my-app:catalog-reconciler)`) and project-scope ids (`Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`).
+- Plugin-shipped subagents omit the banned frontmatter fields (`hooks`, `mcpServers`, `permissionMode`). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) declare inline `mcpServers` — a capability silently ignored on plugin agents per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent) — so they run at **project scope**. To stop them from *also* loading as broken plugin-namespaced duplicates (`qa-my-app:qa-page-analyzer` with no browser, wasting session context), `plugin.json` declares an explicit `agents` allowlist of only the four true plugin subagents (`route-discoverer`, `test-author`, `catalog-reconciler`, `result-reviewer`). The two browser agents ship in `agents/` purely as templates that `/qa-my-app:init` Phase 0 copies into `.claude/agents/`. Pointing the `agents` allowlist into the default `agents/` folder raises no `/doctor` warning per the [reference](https://code.claude.com/docs/en/plugins-reference#path-behavior-rules).
+- Invocation control is scoped to risk. The five skills that overwrite the catalog or spawn browser runs (`init`, `scan`, `sync`, `run`, `run-all`) set `disable-model-invocation: true` so Claude can't auto-trigger a destructive or costly operation; the read-only `status` and the change-scoped `verify` omit it so Claude can reach them from natural phrasing. Per the [skills docs](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill), that flag also removes a skill's description from context entirely — which is why the five manual-only skills carry **no** `when_to_use` block at all (trigger phrases there could never fire); only the two model-invocable skills (`status`, `verify`) declare one.
+- All workflow skills declare every spawned agent in `allowed-tools` — plugin-scope ids (`Agent(qa-my-app:route-discoverer)`, `Agent(qa-my-app:test-author)`, `Agent(qa-my-app:catalog-reconciler)`, `Agent(qa-my-app:result-reviewer)`) and project-scope ids (`Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`).
+- **Every verdict is checked twice.** Mechanically by `scripts/verify-result.mjs` (schema, verdict consistency, screenshot count cross-checks — blocking `issues`; suspicious-verdict signals like `PASS with console errors` or byte-identical captures — non-blocking `warnings`), then visually: the runner inspects each screenshot as it captures it, and the skills' **vision spot-check** (canonical contract in [agents/result-reviewer.md](agents/result-reviewer.md)) compares the images to the claims in `result.md` — in-conversation for small batches, fanned out to `qa-my-app:result-reviewer` above 12 images. A mismatch flows through the same one-retry path as a schema failure.
 - `hooks/hooks.json` uses exec form (`command + args`), seconds-based timeouts, and `async: true` for the observational `PostToolUse` hook.
 - Sensitive `userConfig` fields are `sensitive: true` and exposed only via env vars (`CLAUDE_PLUGIN_OPTION_<KEY>`).
 - Every path reference uses `${CLAUDE_PLUGIN_ROOT}` so the plugin works regardless of install location.
 - Subagents cannot spawn other subagents (per Claude docs). The parallel run-all orchestrator therefore lives in the **skill** layer (main session), which fans work out to N `qa-test-runner` subagents in batches.
-- The nine Node helpers under `scripts/` — the deterministic backbone: drift detection, the `result.md` schema gate, credential resolution — are covered by **46 behavioural tests** under [`tests/`](tests/), run in CI on every push. Built on the stdlib [`node:test`](https://nodejs.org/api/test.html) runner, so the repo keeps its zero-dependency posture: `npm test` needs no install. Tests assert on both stdout JSON **and exit codes**, since `catalog-diff --precommit`, `auth-resolve`, and `verify-result` all signal through the exit code. The suite is mutation-checked — deliberately breaking a rule makes exactly the test that covers it fail.
+- The nine Node helpers under `scripts/` — the deterministic backbone: drift detection, the `result.md` schema gate, credential resolution, the run dashboard — are covered by **54 behavioural tests** under [`tests/`](tests/), run in CI on every push. Built on the stdlib [`node:test`](https://nodejs.org/api/test.html) runner, so the repo keeps its zero-dependency posture: `npm test` needs no install. Tests assert on both stdout JSON **and exit codes**, since `catalog-diff --precommit`, `auth-resolve`, and `verify-result` all signal through the exit code. The suite is mutation-checked — deliberately breaking a rule makes exactly the test that covers it fail.
 - Issue-tracker MCPs (GitHub/Jira/ADO) are configured by the user at user-scope via `claude mcp add`, per [MCP docs](https://code.claude.com/docs/en/mcp). The plugin only prompts and prints the commands — it never stores credentials in the manifest.
 
 ---

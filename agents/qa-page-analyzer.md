@@ -62,6 +62,7 @@ You are a page-analysis specialist. You drive a real browser to understand a sin
    - Page title, URL after redirects.
    - Accessibility snapshot (full tree).
    - Visible headings, landmarks, breadcrumbs.
+   - **A settled-page screenshot** saved to `QA-tests/.qa-catalog/analyses/<route-slug>.png` (e.g. `customers.png` for `/customers`). Run `mkdir -p QA-tests/.qa-catalog/analyses` first (Bash is allowed for that one command), then pass an **absolute** path — prefix your working directory — to the engine's screenshot tool: relative filenames resolve against the MCP server's own output dir, not the repo. The screenshot tool writes the file itself; do not use Write. This image is visual ground truth for `test-author` — its path travels in your output as `screenshot`. If the engine cannot capture screenshots (`stagehand`), skip it and report `"screenshot": null`.
 
 4. **Enumerate every interactive element**:
    - **Forms**: For each `<form>` or form-like container — id/name/aria-label, each field (name, type, required, default value, placeholder, accept-attribute, min/max/pattern/maxlength), associated label, validation rules inferred from source + DOM, submit button(s). For every field, also suggest a `sampleValid` value (one that satisfies the rules) and a `sampleInvalid` value (one that trips a specific rule), so the test-author can write a real submission without guessing. Derive these from the field's actual constraints, not generic defaults.
@@ -90,6 +91,7 @@ Return only this JSON (no prose):
 {
   "route": "/customers",
   "sourceFile": "app/customers/page.tsx",
+  "screenshot": "QA-tests/.qa-catalog/analyses/customers.png",
   "title": "Customers",
   "requiresAuth": false,
   "authFailed": false,

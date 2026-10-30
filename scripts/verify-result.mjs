@@ -10,6 +10,7 @@
 //   {"taskId":"T03-...","valid":true,"issues":[],"parsed":{...}}
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { basename, join, resolve } from "node:path";
 
 const target = process.argv[2];
@@ -37,6 +38,7 @@ const parsed = {
   consoleErrors: null,
   networkFailures: null,
   defects: [],
+  browserEngine: null,
 };
 
 const resultPath = join(dir, "result.md");
@@ -72,6 +74,10 @@ parsed.durationSec = Number((md.match(headerFields["Duration \\(s\\)"]) || [, "0
 parsed.screenshotsClaimed = Number((md.match(headerFields.Screenshots) || [, "0"])[1]) || 0;
 parsed.consoleErrors = Number((md.match(headerFields["Console errors"]) || [, "0"])[1]) || 0;
 parsed.networkFailures = Number((md.match(headerFields["Network failures"]) || [, "0"])[1]) || 0;
+// Optional row — older results and some fixtures omit it. Used only to gate the
+// screenshot-evidence warnings below (the stagehand engine cannot capture images).
+parsed.browserEngine =
+  (md.match(/^\|\s*Browser engine\s*\|\s*([^|]+?)\s*\|/im) || [, null])[1]?.trim() || null;
 
 // --- 2. Top-level Result must be PASS|FAIL|BLOCKED ---------------------------
 const verdict = (parsed.result || "").toUpperCase();
@@ -119,6 +125,11 @@ parsed.screenshotsOnDisk = onDisk;
 
 if (parsed.screenshotsClaimed > 0 && refs.length === 0) {
   issues.push(`Screenshots header claims ${parsed.screenshotsClaimed} but result.md has no ![](...) references`);
+} else if (refs.length > 0 && refs.length < parsed.screenshotsClaimed) {
+  issues.push(`Screenshots header claims ${parsed.screenshotsClaimed} but result.md embeds only ${refs.length}`);
+}
+if (parsed.screenshotsClaimed > 0 && onDisk < parsed.screenshotsClaimed) {
+  issues.push(`Screenshots header claims ${parsed.screenshotsClaimed} but only ${onDisk} image file(s) exist on disk`);
 }
 
 // --- 6. Defects section parsing ----------------------------------------------
@@ -129,7 +140,52 @@ if (parsed.result === "FAIL" && parsed.defects.length === 0 && !/^\s*-\s*none\b/
   issues.push("Result is FAIL but Defects Found section has no DEF-/ERR- ids and is not explicitly 'None'");
 }
 
-// --- 7. Final verdict --------------------------------------------------------
+// --- 7. Suspicious-verdict signals (warnings — non-blocking) ----------------
+// These do NOT flip `valid`: they are deterministic precursors that tell the
+// supervisor which results the vision spot-check must review first
+// (see agents/result-reviewer.md → "Spot-check contract").
+const warnings = [];
+const engineCaptures = /playwright|chrome-devtools/i.test(parsed.browserEngine || "");
+if (verdict === "PASS" && parsed.consoleErrors > 0) {
+  warnings.push(
+    `top-level PASS with ${parsed.consoleErrors} console error(s) — prioritize in the vision spot-check`,
+  );
+}
+if (engineCaptures && verdict === "PASS" && parsed.screenshotsClaimed === 0 && onDisk === 0) {
+  warnings.push(
+    `PASS with zero screenshots on the ${parsed.browserEngine} engine — no visual evidence to confirm`,
+  );
+}
+if (engineCaptures && verdict === "FAIL" && onDisk === 0) {
+  warnings.push(
+    `FAIL with no screenshot evidence on the ${parsed.browserEngine} engine — vision spot-check cannot confirm`,
+  );
+}
+const existingRefs = [];
+for (const r of refs) {
+  const abs = resolve(dir, r);
+  if (existsSync(abs)) existingRefs.push({ r, abs });
+}
+for (const { r, abs } of existingRefs) {
+  let size = 0;
+  try { size = statSync(abs).size; } catch { /* ignore */ }
+  if (size < 1024) {
+    warnings.push(`screenshot ${r} is suspiciously small (${size} bytes) — may be blank`);
+  }
+}
+if (existingRefs.length >= 3) {
+  const hashes = new Set();
+  for (const { abs } of existingRefs) {
+    try { hashes.add(createHash("sha1").update(readFileSync(abs)).digest("hex")); } catch { /* ignore */ }
+  }
+  if (hashes.size === 1) {
+    warnings.push(
+      `all ${existingRefs.length} embedded screenshots are byte-identical — capture may be stale`,
+    );
+  }
+}
+
+// --- 8. Final verdict --------------------------------------------------------
 const valid = issues.length === 0;
-process.stdout.write(JSON.stringify({ taskId, valid, issues, parsed }));
+process.stdout.write(JSON.stringify({ taskId, valid, issues, warnings, parsed }));
 process.exit(valid ? 0 : 1);

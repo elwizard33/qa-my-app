@@ -79,10 +79,12 @@ export function validResultMd(overrides = {}) {
     screenshots: "0",
     consoleErrors: "0",
     networkFailures: "0",
+    engine: "",
     tcs: "### TC-01: loads — PASS",
     defects: "- none",
     ...overrides,
   };
+  const engineRow = f.engine ? `| Browser engine | ${f.engine} |\n` : "";
   return `# Result — T01
 
 | Field | Value |
@@ -96,7 +98,7 @@ export function validResultMd(overrides = {}) {
 | Screenshots | ${f.screenshots} |
 | Console errors | ${f.consoleErrors} |
 | Network failures | ${f.networkFailures} |
-
+${engineRow}
 ## Test Case Results
 
 ${f.tcs}

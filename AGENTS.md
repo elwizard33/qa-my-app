@@ -17,17 +17,18 @@
 | `agents/route-discoverer.md` | Static route discovery from source. | plugin subagent |
 | `agents/test-author.md` | Page-analysis JSON → task markdown. | plugin subagent |
 | `agents/catalog-reconciler.md` | Drift planner for `/qa-my-app:sync`. | plugin subagent |
+| `agents/result-reviewer.md` | Vision adjudicator — reads `result.md` claims + their PNGs, returns confirmed/mismatch. Owns the canonical **Spot-check contract** the run skills reference. | plugin subagent |
 | `agents/qa-page-analyzer.md` | Browser-driving element inventory. Each spawn starts its own `npx @playwright/mcp@0.0.78` process. | **project** (copied to `.claude/agents/` by `/qa-my-app:init` Phase 0) |
 | `agents/qa-test-runner.md` | Browser-driving task execution → `result.md` + screenshots. | **project** (same as above) |
 | `skills/{init,scan,sync,run,run-all,status,verify}/SKILL.md` | Slash commands `/qa-my-app:*`. `verify` is the change/ticket-scoped inner loop. | plugin skill |
-| `hooks/hooks.json` | `SessionStart` (matcher: `startup`) catalog diff + async `PostToolUse` matcher on `Write\|Edit\|MultiEdit`. | plugin hook |
+| `hooks/hooks.json` | `SessionStart` (matcher: `startup`) catalog diff + async `PostToolUse` matcher on `Write\|Edit`. | plugin hook |
 | `scripts/*.mjs`, `scripts/*.sh` | Pure-stdlib Node helpers + Bash precommit installer. Invoked via `node ${CLAUDE_PLUGIN_ROOT}/scripts/...`. | plugin scripts |
 | _(no `.mcp.json`)_ | Intentionally absent. The browser MCP is declared inline on the project-level browser agents so it never loads into the main conversation. | — |
 
 ## Hard rules (enforced by reviewers + CI)
 
-1. **Plugin subagents must NOT declare `hooks`, `mcpServers`, or `permissionMode`.** Silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) live at project scope because they need inline `mcpServers`. **They must NOT be auto-loaded as plugin agents** — `plugin.json` declares an explicit `agents` allowlist (`route-discoverer`, `test-author`, `catalog-reconciler` only) so the two browser agents in `agents/` are treated purely as copy-templates, not registered as `qa-my-app:*` agents. If you add a new *plugin-scope* agent, add it to that allowlist too, or it won't load.
-2. **`model: inherit` everywhere.** No agent hardcodes a model id. The user's session model is honored. **`effort` is the cost knob, not `model`.** Tune `effort` per agent by how much reasoning the task genuinely needs — reasoning-heavy agents that infer intent from source (`qa-page-analyzer`) keep `effort: high`; deterministic executors that follow a pre-authored task verbatim (`qa-test-runner`) use `effort: medium` to avoid spending extended-thinking output tokens (multiplied across every parallel spawn). Do not raise an agent's `effort` without a reasoning justification.
+1. **Plugin subagents must NOT declare `hooks`, `mcpServers`, or `permissionMode`.** Silently ignored per the [docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent). The two browser-driving agents (`qa-page-analyzer`, `qa-test-runner`) live at project scope because they need inline `mcpServers`. **They must NOT be auto-loaded as plugin agents** — `plugin.json` declares an explicit `agents` allowlist (`route-discoverer`, `test-author`, `catalog-reconciler`, `result-reviewer` only) so the two browser agents in `agents/` are treated purely as copy-templates, not registered as `qa-my-app:*` agents. If you add a new *plugin-scope* agent, add it to that allowlist too, or it won't load.
+2. **`model: inherit` everywhere.** No agent hardcodes a model id. The user's session model is honored. **`effort` is the cost knob, not `model`.** Tune `effort` per agent by how much reasoning the task genuinely needs — reasoning-heavy agents that infer intent from source (`qa-page-analyzer`) keep `effort: high`; deterministic executors that follow a pre-authored task verbatim (`qa-test-runner`) use `effort: medium` to avoid spending extended-thinking output tokens (multiplied across every parallel spawn). Do not raise an agent's `effort` without a reasoning justification. (The docs accept `low | medium | high | xhigh | max` — the restriction to `low|medium|high` once recorded in AUDIT's F-023 is superseded; we stay on `medium`/`high` for cost, not availability.)
 3. **`disable-model-invocation: true` on every *destructive or costly* skill.** `init`, `scan`, `sync`, `run`, `run-all` are slash-only — Claude must never start a catalog rewrite or a browser run on its own. `status` (read-only) and `verify` (change-scoped) omit the flag so Claude can reach them from natural phrasing. Note the flag also drops the skill's `description` from context entirely, so a `when_to_use` block on a slash-only skill is inert — don't add one expecting it to fire.
 4. **Path portability.** Every script reference uses `${CLAUDE_PLUGIN_ROOT}`. No absolute paths.
 5. **Exec form for hook commands.** `command + args` array — never a single shell string (`${CLAUDE_PLUGIN_ROOT}` would be quoted incorrectly).
@@ -39,7 +40,7 @@
 
 ## Agent selection convention
 
-Plugin-scope spawn ids use the namespace: `Agent(qa-my-app:route-discoverer)`, `Agent(qa-my-app:test-author)`, `Agent(qa-my-app:catalog-reconciler)`.
+Plugin-scope spawn ids use the namespace: `Agent(qa-my-app:route-discoverer)`, `Agent(qa-my-app:test-author)`, `Agent(qa-my-app:catalog-reconciler)`, `Agent(qa-my-app:result-reviewer)`.
 
 Project-scope (browser) spawn ids drop the namespace: `Agent(qa-page-analyzer)`, `Agent(qa-test-runner)`. They are installed into the user's `.claude/agents/` by `/qa-my-app:init` Phase 0 and **must** be committed by the user so the whole team shares the same browser-agent versions.
 
@@ -52,6 +53,7 @@ Project-scope (browser) spawn ids drop the namespace: `Agent(qa-page-analyzer)`,
 | `test-author` | yellow |
 | `qa-test-runner` | orange |
 | `catalog-reconciler` | purple |
+| `result-reviewer` | cyan |
 
 With up to 12 parallel runners + 4 analyzers + 1 supervisor visible during `/qa-my-app:run-all`, color is the only way the user can tell which row is which kind of work.
 
@@ -61,6 +63,7 @@ With up to 12 parallel runners + 4 analyzers + 1 supervisor visible during `/qa-
 - **Adding a new userConfig field:** `.claude-plugin/plugin.json` `userConfig` block. If it's an array, use `multiple: true`. If sensitive, use `sensitive: true`.
 - **Adding a new hook:** `hooks/hooks.json`. Always include `matcher`, `timeout`, exec form. Use `async: true` for observational/PostToolUse hooks.
 - **Adding a new skill:** create `skills/<name>/SKILL.md` with `description`, `allowed-tools`, optional `argument-hint`. Add `disable-model-invocation: true` if it rewrites the catalog or drives a browser; otherwise omit it and add a `when_to_use` block with trigger phrases so Claude can find it.
+- **Changing how a result is judged:** the vision **Spot-check contract** lives in `agents/result-reviewer.md` — the run skills (`run`, `run-all`, `verify`) reference it, so update the contract there first, then the skill wiring. Deterministic precursors (count cross-checks, suspicious-verdict signals) live in `scripts/verify-result.mjs` as `issues` (blocking) vs `warnings` (non-blocking).
 
 ## Don'ts
 

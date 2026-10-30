@@ -1,7 +1,5 @@
 ---
 description: Force a full re-scan of every route and rewrite every task, regardless of fingerprints. Use when the catalog drifted too far or when you change the test-author template or task depth. Destructive — overwrites QA-tests/tasks/ after backing them up.
-when_to_use: |
-  Use when the catalog has drifted too far for an incremental sync, when the test-author template has been changed, or after adjusting task depth settings. Trigger phrases include "force rescan", "regenerate all tests", "full rescan", "redo all tasks", "rescan everything", and "regenerate catalog".
 disable-model-invocation: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node *), Bash(git *), Bash(mkdir *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author)
 ---

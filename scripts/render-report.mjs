@@ -44,6 +44,7 @@ function parseResultMd(p) {
   const networkFailures = Number(grab(/\|\s*Network failures\s*\|\s*(\d+)\s*\|/i) ?? 0);
   const duration = Number(grab(/\|\s*Duration \(s\)\s*\|\s*(\d+)\s*\|/i) ?? 0);
   const route = grab(/\|\s*Route\s*\|\s*([^|]+?)\s*\|/i) || "";
+  const images = [...txt.matchAll(/!\[[^\]]*\]\(([^)]+\.(?:png|jpg|jpeg|webp))\)/gi)].map((m) => m[1].trim());
   const tcMatches = [...txt.matchAll(/^###\s+TC-\d+.*?—\s*(PASS|FAIL|BLOCKED)\s*$/gim)];
   let passCount = 0, failCount = 0, blockedCount = 0;
   for (const m of tcMatches) {
@@ -57,7 +58,7 @@ function parseResultMd(p) {
     tcCount: tcMatches.length || null,
     passCount, failCount, blockedCount,
     screenshots, consoleErrors, networkFailures,
-    duration, route,
+    duration, route, images,
   };
 }
 
@@ -171,6 +172,31 @@ function verificationFailures(tasks) {
     .map((t) => ({ taskId: t.taskId, attempt: t.attempt, issues: t.verificationIssues }));
 }
 
+// Screenshot gallery (F-088): render the actual evidence, not just counts.
+// Thumbnails link relative to report.html (both live in runRoot) so the page
+// stays self-contained — open it from the run directory and the images resolve.
+function gallerySection(tasks, runRoot) {
+  const blocks = [];
+  for (const t of tasks) {
+    const parsed = parseResultMd(join(runRoot, t.taskId, "result.md"));
+    const imgs = parsed?.images || [];
+    if (!imgs.length) continue;
+    const thumbs = imgs
+      .map((rel) => {
+        if (!existsSync(join(runRoot, t.taskId, rel))) return "";
+        const href = `${t.taskId}/${rel}`;
+        return `<a href="${htmlEscape(href)}" target="_blank" rel="noopener"><img src="${htmlEscape(href)}" alt="${htmlEscape(rel)}" loading="lazy" /></a>`;
+      })
+      .filter(Boolean)
+      .join("");
+    blocks.push(
+      `<details><summary><code>${htmlEscape(t.taskId)}</code> — ${imgs.length} screenshot${imgs.length === 1 ? "" : "s"}</summary>${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p class="dash">referenced screenshots missing on disk</p>`}</details>`,
+    );
+  }
+  if (!blocks.length) return "";
+  return `<div class="gallery"><h2 style="font-size:1.1rem;margin:1.75rem 0 .5rem">Screenshot gallery</h2>${blocks.join("\n")}</div>`;
+}
+
 function render(runRootArg) {
   const runRoot = resolve(process.env.CLAUDE_PROJECT_DIR || process.cwd(), runRootArg);
   if (!existsSync(runRoot)) {
@@ -250,6 +276,7 @@ function render(runRootArg) {
     rows,
     defectsSection,
     verifSection,
+    gallerySection: gallerySection(tasks, runRoot),
     autoChecked: done ? "" : "checked",
     doneJs: done ? "true" : "false",
     refreshMs: String(REFRESH_MS),

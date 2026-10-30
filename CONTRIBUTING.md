@@ -127,23 +127,36 @@ one-plugin catalog. Three ways it reaches users:
 /plugin install qa-my-app@qa-my-app
 ```
 
-**B — The Anthropic community marketplace** (`@claude-community`). Submit at
-[platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit)
-— the Console form. The
-[claude.ai form](https://claude.ai/admin-settings/directory/submissions/plugins/new)
-requires a Team or Enterprise organization with directory-management access.
-The review pipeline runs `claude plugin validate` (the same check as
-`npm run validate`) plus automated safety screening. On approval the plugin is
-pinned to a commit SHA in
+**B — Anthropic's directory → the `claude-community` marketplace.** Submit from
+the [developer portal at claude.ai/directory/manage](https://claude.ai/directory/manage):
+**Submit new → Plugin bundle** → run **Validate** (it checks more than
+`npm run validate`) → **Submit for review**. Any paid claude.ai plan can submit —
+Pro/Max from your own account; on Team/Enterprise an Owner or a member with the
+**Directory** permission. After the first approval you don't resubmit: push to
+the branch the directory tracks, it re-runs validation + the security scan on
+each commit, and you press **Publish update** in the portal. **Raise
+`plugin.json` `version` with every release** — installed copies use it to detect
+that an update exists. A version that fails the scan keeps serving the last
+published one until it passes or a reviewer clears it. Approved plugins are
+mirrored into
 [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community)
-and CI bumps the pin as commits land; the public catalog syncs **nightly**, so
-expect a lag. Never open a PR against that repo — it's a read-only mirror and
-PRs auto-close.
+(marketplace name `claude-community`, added with
+`/plugin marketplace add anthropics/claude-plugins-community`). The mirror is
+read-only and PRs auto-close — publish through the portal, never by PR.
 
-**C — `claude-plugins-official`.** Curated by Anthropic at its discretion.
-[There is no application process](https://code.claude.com/docs/en/plugins#submit-your-plugin-to-the-community-marketplace),
-and the submission form does **not** feed it — only a partner contact can
-arrange a listing.
+> **The old Console form is gone.**
+> [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit)
+> is no longer supported for new submissions — the developer portal supersedes
+> it. If a submission was made through it, withdraw it from
+> [platform.claude.com/plugins/submissions](https://platform.claude.com/plugins/submissions)
+> (or email `directory@anthropic.com` when no Withdraw button shows) before
+> re-submitting in the portal, or the portal refuses with "Already submitted by
+> another organization".
+
+**C — `claude-plugins-official`.** Curated by Anthropic — plugins they maintain
+plus plugins from partners and other authors. There is
+[no self-serve application process](https://code.claude.com/docs/en/plugins/anthropic-marketplaces);
+the self-serve routes are A (this repo) and B (the directory).
 
 > Platform support is **Claude Code only**. Cowork supports hooks, subagents, and
 > local MCP servers, but every skill here shells out to `Bash(node *)` — and four

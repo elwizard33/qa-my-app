@@ -85,6 +85,12 @@
   .verif details { background: var(--card); border: 1px solid var(--border);
                    border-radius: 6px; padding: .5rem .85rem; }
   .verif details + details { margin-top: .35rem; }
+  .gallery details { background: var(--card); border: 1px solid var(--border);
+                     border-radius: 6px; padding: .5rem .85rem; margin-top: .35rem; }
+  .gallery details summary { cursor: pointer; }
+  .gallery .thumbs { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+  .gallery .thumbs img { width: 160px; border: 1px solid var(--border); border-radius: 6px;
+                         background: #fff; display: block; }
   footer { color: var(--muted); margin-top: 2.5rem; font-size: 12px;
            display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
   .controls { float: right; font-size: 12px; }
@@ -141,6 +147,8 @@
 {{defectsSection}}
 
 {{verifSection}}
+
+{{gallerySection}}
 
 <footer>
   <span>auto-refresh: <strong>{{refreshLabel}}</strong></span>

@@ -18,6 +18,9 @@ A Page Analysis JSON (see `page-analyzer` output schema). The orchestrator may a
 ## Read the source before writing
 You have `Read` and `Glob`. Open the route's `sourceFile` (and any form-schema file the analysis references — zod/yup/react-hook-form/Angular validators) and read the **exact validation messages, max-lengths, patterns, and required flags** directly. The analysis JSON is a summary; the source is ground truth. Author edge cases from the real rules you read, not generic guesses.
 
+## Look at the page screenshot
+When the analysis carries a `screenshot` path (the analyzer's settled-page capture), `Read` that image before authoring — it is visual ground truth for what the page actually looks like: layout, button placement, column order, empty-state text, where a toast would appear. Use it to pin **exact** expectations in steps and assertions ("status toast appears top-right", "the empty grid reads 'No customers yet'", "`Actions` is the last column"). If the path is absent, or the image cannot be read, author from the source + analysis as before — never block on it.
+
 ## Output
 One or more files at `QA-tests/tasks/T<NN>-<route-slug>-<flow-slug>.md`. Use the next free `<NN>` by scanning existing files. Pad to two digits.
 

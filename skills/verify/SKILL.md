@@ -3,7 +3,7 @@ description: Verify the work in flight — test only what changed. Resolves scop
 when_to_use: |
   Use right after making a change to confirm it works, to test a specific page or ticket end-to-end, or to verify a PR before pushing. Trigger phrases include "verify this", "test what I changed", "does my change work", "verify the ticket", "test this page now", "check my PR", "verify PROJ-123", and "test the form I just built".
 argument-hint: "[ticket-id | route | path | --branch [base] | --staged]"
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bash(git *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-test-runner)
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bash(git *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
 ---
 
 # /qa-my-app:verify — Test what changed (or what a ticket asks for)
@@ -77,8 +77,9 @@ Reuse the `/qa-my-app:run-all` dispatch/verify loop, scoped to just the collecte
 1. `runId = <UTC ISO-8601, ':' → '-'>`; `runRoot = QA-tests/results/runs/<runId>`. Create it and one subfolder per task.
 2. Write `<runRoot>/run.json` (include `"filter": "<resolved scope>"` and, if present, `"acceptanceCriteria": [...]`).
 3. Dispatch `qa-test-runner` subagents in parallel batches of `${user_config.parallel_test_runners}`, exactly as `/qa-my-app:run-all` Phase 2 does (per-role credentials resolved once up front). Each runner fills and submits the forms for real and writes `result.md` with embedded screenshots and — when the task carries acceptance criteria — the `## Acceptance criteria` results table.
-4. Verify each result with `node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-result.mjs" "<runRoot>/<taskId>"`; one retry on verification failure.
-5. After every state transition, refresh the dashboard: `node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.mjs" "<runRoot>"`.
+4. Verify each result with `node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-result.mjs" "<runRoot>/<taskId>"` (trust its `valid`/`issues`; keep its `warnings` for step 5); one retry on verification failure.
+5. **Vision spot-check** every verified result per the **Spot-check contract** in [`agents/result-reviewer.md`](../../agents/result-reviewer.md): `Read` the screenshots referenced by FAIL/BLOCKED TCs, plus the last embedded screenshot of each PASS task (and the first one when step 4 returned `warnings`), and compare each image to its claim in `result.md`. Review directly when the batch's image set is ≤ 12 images; above that, fan out `Agent(qa-my-app:result-reviewer)` in batches of `${user_config.parallel_test_runners}`. A `mismatch` counts as a verification failure — the same one-retry path as step 4, then re-verify + re-check.
+6. After every state transition, refresh the dashboard: `node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.mjs" "<runRoot>"`.
 
 ### Phase 3 — Report
 

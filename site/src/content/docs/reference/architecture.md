@@ -51,7 +51,7 @@ flowchart TD
 
 Plugin-shipped subagents **cannot** declare inline `mcpServers` — the field is silently ignored ([docs](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)). To give each parallel spawn its own dedicated browser process (true OS-level isolation, no shared cookies/localStorage/auth state), the two browser-driving agents must live at **project scope**. `/qa-my-app:init` Phase 0 copies them from the plugin into `.claude/agents/`.
 
-Because they physically sit in the plugin's `agents/` directory, they would otherwise be auto-registered as plugin agents with `mcpServers` stripped (no browser, plus duplicate context cost). To prevent that, `plugin.json` declares an explicit `agents` allowlist containing **only** the three true plugin subagents.
+Because they physically sit in the plugin's `agents/` directory, they would otherwise be auto-registered as plugin agents with `mcpServers` stripped (no browser, plus duplicate context cost). To prevent that, `plugin.json` declares an explicit `agents` allowlist containing **only** the four true plugin subagents.
 
 ## Why the supervisor lives in the skill layer
 

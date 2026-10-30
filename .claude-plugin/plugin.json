@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "qa-my-app",
   "displayName": "QA My App",
-  "description": "End-to-end QA testing as a Claude Code plugin. Auto-discovers your stack and routes, drives every page in a real browser via the bundled Playwright MCP, runs the whole platform in parallel test-runner subagents, verifies each result against a schema, and files defects to GitHub/Jira/Azure DevOps if connected. No test code to write — the plugin understands your app from source.",
-  "version": "1.0.0",
+  "description": "End-to-end QA testing as a Claude Code plugin. Auto-discovers your stack and routes, drives every page in a real browser via the bundled Playwright MCP, runs the whole platform in parallel test-runner subagents, verifies each result against a schema and — via vision — against its own screenshots, and files defects to GitHub/Jira/Azure DevOps if connected. No test code to write — the plugin understands your app from source.",
+  "version": "1.1.0",
   "author": {
     "name": "elwizard33",
     "email": "elwizard33@users.noreply.github.com",
@@ -16,7 +16,8 @@
   "agents": [
     "./agents/route-discoverer.md",
     "./agents/test-author.md",
-    "./agents/catalog-reconciler.md"
+    "./agents/catalog-reconciler.md",
+    "./agents/result-reviewer.md"
   ],
   "userConfig": {
     "dev_url": {

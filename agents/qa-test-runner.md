@@ -63,6 +63,7 @@ You are a deterministic QA test runner. You drive a real browser to execute exac
 
 4. **Per test case** (TC-01, TC-02, …) execute every numbered step. For each step:
    - Take a screenshot to `<runDir>/TC<NN>-<step-slug>.png`.
+   - **Look at the screenshot you just took.** The screenshot tool returns the image inline — use it. Confirm the pixels show the state you are about to assert: the toast text is actually visible, the expected row is in the grid, the validation error is rendered, and the page is the route you asked for — not a login wall, error boundary, 404, infinite loader, or blank frame. The a11y snapshot and the image can disagree (a React error boundary still exposes stale DOM, a toast can fail to render): when they do, **the image wins** — record `status: FAIL`, note `visual-mismatch: <what the screenshot actually shows>`, and continue to the next TC.
    - Take an accessibility snapshot and verify the assertion the step lists.
    - Continuously capture console errors and failed network requests.
    - If a step's assertion fails, record `status: FAIL`, the actual vs expected, then continue to the next TC (do not abort the whole run unless the failure makes navigation impossible).
@@ -166,6 +167,7 @@ Return ONLY this single JSON line (the run-all skill parses it):
 
 ## Constraints
 - **Submit forms and dialogs for real** — filling fields and clicking submit is the whole point. Use realistic, clearly-test-flavored values (e.g. names/emails carrying the run id) so created records are easy to spot.
+- **A screenshot you have not looked at is not evidence.** Every screenshot you capture comes back to you as an image — check it against what you are about to assert before stamping a TC `PASS`. A PASS whose screenshot shows an error banner, blank page, or wrong route is a defect in the run, not in the app.
 - **Be cautious only with destructive actions.** Clicking delete/remove/destroy/purge-confirm is the one thing you gate behind explicit task authorization; the cancel path you always run. This protects later tasks in the run from losing seed data — it is not a reason to avoid create/edit submissions.
 - Never skip a TC. If you cannot run it, mark it `BLOCKED` with the reason in the result.
 - Embed screenshots with markdown image syntax. Never use a table of filenames.

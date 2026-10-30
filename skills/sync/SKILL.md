@@ -1,7 +1,5 @@
 ---
 description: Re-scan only the routes whose source files changed since the last catalog generation, then patch QA-tests/catalog.json with adds/updates/removes. Run after pulling changes, before committing, or whenever the file-change hook prompts you. Idempotent. Honors plugin user-config for parallelism, auth, and task depth.
-when_to_use: |
-  Use after pulling new code, after modifying route source files, or when the file-change hook flags the catalog as stale. Trigger phrases include "sync catalog", "update tests", "catalog is stale", "routes changed", "sync qa", "update qa catalog", and "reconcile tests".
 disable-model-invocation: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node *), Bash(git *), Bash(mkdir *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-my-app:catalog-reconciler)
 ---

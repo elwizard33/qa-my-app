@@ -189,4 +189,81 @@ describe("verify-result.mjs", () => {
     assert.doesNotThrow(() => JSON.parse(r.stdout));
     p.cleanup();
   });
+
+  // --- F-087: count cross-checks -------------------------------------------
+
+  test("rejects a header claiming more screenshots than result.md embeds", () => {
+    const p = project();
+    const dir = taskDir(
+      p,
+      validResultMd({ screenshots: "3", tcs: "### TC-01: loads — PASS\n\n![step](TC01-step.png)" }),
+    );
+    p.file(`${dir}/TC01-step.png`, "x".repeat(2048));
+    const { json, status } = runJson("verify-result.mjs", [dir], { cwd: p.dir });
+    assert.equal(json.valid, false, "an overclaimed screenshot count hides missing evidence");
+    assert.ok(json.issues.some((i) => /claims 3 but result\.md embeds only 1/.test(i)), JSON.stringify(json.issues));
+    assert.ok(json.issues.some((i) => /only 1 image file\(s\) exist on disk/.test(i)), JSON.stringify(json.issues));
+    assert.equal(status, 1);
+    p.cleanup();
+  });
+
+  // --- F-087: suspicious-verdict warnings (non-blocking) --------------------
+
+  test("warns — but stays valid — when a PASS carries console errors", () => {
+    const p = project();
+    const dir = taskDir(p, validResultMd({ consoleErrors: "2" }));
+    const { json, status } = runJson("verify-result.mjs", [dir], { cwd: p.dir });
+    assert.equal(json.valid, true, "warnings must never block the dispatch queue by themselves");
+    assert.ok(json.warnings.some((w) => /PASS with 2 console error/.test(w)), JSON.stringify(json.warnings));
+    assert.equal(status, 0);
+    p.cleanup();
+  });
+
+  test("warns when every embedded screenshot is byte-identical", () => {
+    const p = project();
+    const dir = taskDir(
+      p,
+      validResultMd({
+        screenshots: "3",
+        tcs: "### TC-01: loads — PASS\n\n![a](TC01-a.png)\n\n![b](TC01-b.png)\n\n![c](TC01-c.png)",
+      }),
+    );
+    p.file(`${dir}/TC01-a.png`, "same-bytes");
+    p.file(`${dir}/TC01-b.png`, "same-bytes");
+    p.file(`${dir}/TC01-c.png`, "same-bytes");
+    const { json } = runJson("verify-result.mjs", [dir], { cwd: p.dir });
+    assert.equal(json.valid, true);
+    assert.ok(json.warnings.some((w) => /byte-identical/.test(w)), JSON.stringify(json.warnings));
+    p.cleanup();
+  });
+
+  test("warns on a suspiciously small (likely blank) screenshot", () => {
+    const p = project();
+    const dir = taskDir(
+      p,
+      validResultMd({ screenshots: "1", tcs: "### TC-01: loads — PASS\n\n![step](TC01-step.png)" }),
+    );
+    p.file(`${dir}/TC01-step.png`, "x");
+    const { json, status } = runJson("verify-result.mjs", [dir], { cwd: p.dir });
+    assert.equal(json.valid, true, "file exists — evidence quality is a warning, not a schema failure");
+    assert.ok(json.warnings.some((w) => /suspiciously small/.test(w)), JSON.stringify(json.warnings));
+    assert.equal(status, 0);
+    p.cleanup();
+  });
+
+  test("zero-evidence warnings are engine-gated: playwright warns, stagehand does not", () => {
+    const pw = project();
+    const dirPw = taskDir(pw, validResultMd({ engine: "playwright" }));
+    const a = runJson("verify-result.mjs", [dirPw], { cwd: pw.dir });
+    assert.equal(a.json.valid, true);
+    assert.ok(a.json.warnings.some((w) => /zero screenshots on the playwright/.test(w)), JSON.stringify(a.json.warnings));
+    pw.cleanup();
+
+    const sh = project();
+    const dirSh = taskDir(sh, validResultMd({ engine: "stagehand" }));
+    const b = runJson("verify-result.mjs", [dirSh], { cwd: sh.dir });
+    assert.equal(b.json.valid, true);
+    assert.ok(!b.json.warnings.some((w) => /zero screenshots/.test(w)), "stagehand cannot capture — no warning");
+    sh.cleanup();
+  });
 });

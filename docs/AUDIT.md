@@ -31,7 +31,7 @@
 | [F-020](#f-020) | 🟢 Low | `README.md` | `claude mcp add` examples follow docs option ordering | ✅ OK | Pass 1 |
 | [F-021](#f-021) | 🟢 Low | `.mcp.json` | Plugin substitutions (`${CLAUDE_PLUGIN_ROOT}` etc.) available if needed | ✅ OK | Pass 1 |
 | [F-022](#f-022) | 🟡 Medium | `skills/*/SKILL.md` | `argument-hint` frontmatter field is valid on plugin slash-command skills | ✅ OK | Pass 2 |
-| [F-023](#f-023) | 🟡 Medium | `agents/*.md` | `effort` value is restricted to `low \| medium \| high` — all uses valid | ✅ OK | Pass 2 |
+| [F-023](#f-023) | 🟡 Medium | `agents/*.md` | `effort` value is restricted to `low \| medium \| high` — all uses valid | ✅ OK — restriction superseded by F-092 (Pass 9) | Pass 2 |
 | [F-024](#f-024) | 🟡 Medium | `hooks/hooks.json` | `SessionStart` hook entries correctly omit `matcher` (no tool name to match) | ✅ Superseded by F-043 | Pass 2 |
 | [F-025](#f-025) | 🟡 Medium | `agents/page-analyzer.md` | `disallowedTools: Write, Edit` retained intentionally — analyzer only returns JSON, never writes files | ✅ OK by design | Pass 2 |
 | [F-026](#f-026) | 🟢 Low | `skills/*/SKILL.md` | Skill name is derived from directory; only `description` is required in frontmatter | ✅ OK | Pass 2 |
@@ -96,8 +96,53 @@
 | [F-083](#f-083) | 🟠 High | `scripts/*.mjs` | Nine deterministic Node helpers with **no behavioural tests** — CI ran `node --check` only, which validates syntax, not behaviour. A regression in `auth-resolve.mjs` (load-bearing for all auth modes as of F-078) or `verify-result.mjs` (the pass/fail gate) would ship silently. | ✅ Fixed (Pass 8 — 46 tests + CI) | Pass 8 |
 | [F-084](#f-084) | 🟡 Medium | `.github/` | `CONTRIBUTING.md` step 5 instructed contributors to "fill in the template" for PRs, but no `PULL_REQUEST_TEMPLATE.md` existed. | ✅ Fixed (Pass 8) | Pass 8 |
 | [F-085](#f-085) | 🟢 Low | repo root | No `CODE_OF_CONDUCT.md`. `CONTRIBUTING.md` carried a three-line Conduct section, but GitHub's community-health checks and most enterprise review checklists look for the standard file. | ✅ Fixed (Pass 8) | Pass 8 |
+| F-086 | 🟠 High | verification pipeline | Screenshots were captured and file-existence-checked, but **no agent ever looked at one** — `run-all` even told the supervisor not to re-validate. A runner could stamp PASS on a screenshot of an error banner and the whole pipeline would agree. | ✅ Fixed (Pass 9) | Pass 9 |
+| F-087 | 🟠 High | `scripts/verify-result.mjs` | Screenshot count never cross-checked (claimed vs embedded refs vs files on disk), and no suspicious-verdict signals — PASS-with-console-errors, <1 KB blank captures, byte-identical image sets all passed the gate silently. | ✅ Fixed (Pass 9) | Pass 9 |
+| F-088 | 🟡 Medium | `scripts/render-report.mjs`, `templates/report.html` | Dashboard rendered screenshot **counts** only — no images — so the human couldn't eyeball the evidence either. | ✅ Fixed (Pass 9 — gallery) | Pass 9 |
+| F-089 | 🟡 Medium | `agents/qa-page-analyzer.md`, `agents/test-author.md` | Analysis captured no screenshots, so authoring was vision-blind — expected UI states inferred from JSON + source alone. | ✅ Fixed (Pass 9) | Pass 9 |
+| F-090 | 🟢 Low | `skills/{init,scan,sync,run,run-all}/SKILL.md` | Dead `when_to_use` blocks behind `disable-model-invocation: true` — self-contradictory per F-080 and against AGENTS.md rule 3's own advice. | ✅ Fixed (Pass 9) | Pass 9 |
+| F-091 | 🟢 Low | `hooks/hooks.json` | PostToolUse matcher `Write\|Edit\|MultiEdit` referenced a tool Claude Code no longer ships. | ✅ Fixed (Pass 9) | Pass 9 |
+| F-092 | 🟢 Low | `AGENTS.md`, audit F-023 | `effort` documented as restricted to `low\|medium\|high`; current docs accept `xhigh` and `max` too. | ✅ Fixed (Pass 9) | Pass 9 |
+| F-093 | 🟢 Low | browser agents (screenshot save path) | `browser_take_screenshot` filename resolution (relative → MCP `outputDir`) never verified end-to-end outside a live run; absolute-path guidance now in both browser agents. | ⏳ Pending empirical check | Pass 9 |
 
-**Counts:** 85 findings tracked · 47 fixed · 37 verified compliant / OK by design · 1 deferred (F-063).
+**Counts:** 93 findings tracked · 54 fixed · 37 verified compliant / OK by design · 1 deferred (F-063) · 1 pending empirical check (F-093).
+
+---
+
+## Pass 9 — 2026-10-30 — vision verification: make the evidence prove the verdict
+
+**Scope:** full re-audit against the *current* Claude Code docs (plugins manifest reference, skills, sub-agents, hooks — fetched 2026-10-30) plus a lifecycle trace of the screenshot pipeline: capture → embed → verify → dashboard. Both strict validations and 46 tests green at entry.
+
+**The finding that drove the pass.** Screenshots were taken, embedded as markdown images, and file-existence-checked — but **no agent ever looked at one**. `verify-result.mjs` answers "are the files there?", `run-all` explicitly told the supervisor *not* to re-validate, and `report.html` rendered counts only. A runner could stamp `PASS` on a screenshot of an error banner, a blank frame, or the wrong route, and every layer of the pipeline would agree.
+
+### Fixes
+
+- **F-086 (High) — three-layer vision verification.**
+  1. **Runner self-check** ([agents/qa-test-runner.md](../agents/qa-test-runner.md) step 4): the screenshot tool returns the image inline — the runner must now *look* at each capture and confirm it shows the state it is about to assert; when the a11y snapshot and the image disagree, **the image wins** (`visual-mismatch` → FAIL). Constraint added: "a screenshot you have not looked at is not evidence."
+  2. **Supervisor spot-check** in all three run skills (`run`, `run-all`, `verify`), wired into the existing one-retry path: after `verify-result.mjs` passes, `Read` the screenshots referenced by FAIL/BLOCKED TCs, the last screenshot of each PASS (plus the first when the gate returned `warnings`), and compare each against its claim. A `mismatch` is handled exactly like a mechanical verification failure — attempt < 2 re-dispatches, attempt === 2 becomes `failed-verification` with `vision: <file> — <note>` lines persisted into `verificationIssues` (which the dashboard already renders).
+  3. **New plugin subagent** [agents/result-reviewer.md](../agents/result-reviewer.md) (`qa-my-app:result-reviewer`, `tools: Read, Glob`, `effort: medium`, color cyan) owning the canonical **Spot-check contract** the skills reference. Above 12 spot-check images in a batch the supervisor fans out to it instead of loading pixels into the main conversation — the "only if step 3 proves costly" reviewer, wired at a deterministic threshold rather than deferred. Registered in the `plugin.json` agents allowlist, `allowed-tools` of run/run-all/verify, AGENTS.md (layout, rule 1, spawn ids, color table), README, and the docs site.
+
+- **F-087 (High) — `verify-result.mjs` hardened in two tiers.** *Blocking `issues`*: the `Screenshots` header count is now cross-checked against embedded refs (`claims N but result.md embeds M`) and against files on disk (`claims N but only M image file(s) exist`). *Non-blocking `warnings`* (new output field; exit code still keys off `issues` alone): PASS with console errors; PASS/FAIL with zero visual evidence — gated on the parsed `Browser engine` row being playwright/chrome-devtools so stagehand (which cannot capture) stays quiet; referenced files <1 KB (blank capture); ≥3 byte-identical embedded screenshots (stale capture). Warnings set the spot-check's depth instead of blocking the queue. +5 tests (suite: 15 → 20).
+
+- **F-088 (Medium) — screenshot gallery in `report.html`.** `render-report.mjs` extracts every `![](...)` reference from each `result.md` and renders a collapsible per-task thumbnail grid (links relative to the run root, `loading="lazy"`, click-to-open full size; references missing on disk are labeled instead of silently dropped). New [tests/render-report.test.mjs](../tests/render-report.test.mjs) (3 tests).
+
+- **F-089 (Medium) — the authoring loop can see.** `qa-page-analyzer` captures a settled-page screenshot to `QA-tests/.qa-catalog/analyses/<route-slug>.png` (absolute path per F-093 guidance) and reports it as `screenshot` in its output JSON; `test-author` now `Read`s that image before writing tasks to pin exact visual expectations (toast position, column order, empty-state text). Gracefully null on `stagehand`.
+
+- **F-090 / F-091 / F-092 (Low) — convention cleanups.** Dead `when_to_use` blocks removed from the five `disable-model-invocation` skills (completing F-080 — only `status` and `verify` keep trigger phrases). Hooks matcher `Write|Edit|MultiEdit` → `Write|Edit` (`MultiEdit` no longer exists as a tool). AGENTS.md rule 2 now records the real `effort` range (`low | medium | high | xhigh | max`) and marks F-023's restriction claim superseded — index status updated, historical entry untouched per the no-amend rule.
+
+### Docs re-verified as supported this pass (recorded so Pass 10 doesn't re-litigate)
+
+- `when_to_use` — documented skill frontmatter row (appended to `description`, both share the **1,536-char** listing cap; all seven skills measure 544–816).
+- Subagent `maxTurns`, `memory`, `color`, `effort`, inline `mcpServers` — all current frontmatter table rows; `hooks`/`mcpServers`/`permissionMode` "Ignored for plugin subagents" confirms the browser-agent project-scope workaround.
+- Plugin manifest `agents` field: "Path, or array of paths … **Replaces the default `agents/` scan**" — the explicit allowlist is spec-sanctioned, not a hack.
+
+### Pending
+
+- **F-093** — `browser_take_screenshot` filename resolution stays unverified end-to-end outside a live run. Both browser agents now instruct an absolute path (and `mkdir -p` for the analyses dir), so the failure mode is guidance-level: the first real `/qa-my-app:init` should confirm images land where `verify-result.mjs` expects them.
+
+### Validation
+
+`plugin validate . --strict` and `plugin validate ./.claude-plugin/plugin.json --strict` both pass; `node --check` clean on every `.mjs`; `npm test` → **54/54** (46 prior + 5 verify-result + 3 render-report).
 
 ---
 
