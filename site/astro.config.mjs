@@ -1,12 +1,21 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import remarkGfm from 'remark-gfm';
 
 // Project GitHub Pages site: https://elwizard33.github.io/qa-my-app/
 // `base` must match the repo name for project pages to resolve assets/links.
 export default defineConfig({
   site: 'https://elwizard33.github.io',
   base: '/qa-my-app',
+  // Starlight wires remark-gfm (tables, etc.) into its own .md pipeline, but
+  // the .mdx pipeline it injects via @astrojs/mdx doesn't inherit it — every
+  // .mdx page with a pipe table (init.mdx, subagents.mdx, browsers/*.mdx)
+  // silently lost its <table> and fell back to one run-on paragraph. Setting
+  // it here applies to both .md and .mdx.
+  markdown: {
+    remarkPlugins: [remarkGfm],
+  },
   integrations: [
     starlight({
       title: 'QA My App',
