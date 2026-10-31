@@ -21,7 +21,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## At a glance
 
-6 slash commands · 5 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · **zero test code to write**.
+6 slash commands · 6 subagents · pluggable browser engine (Playwright default · Chrome DevTools · Stagehand/Browserbase) · 9 supported frameworks · 3 issue-tracker integrations (GitHub / Jira / Azure DevOps) · strict-validated by CI on every push · **zero test code to write**.
 
 <CardGrid stagger>
   <Card title="Auto-discovers your stack" icon="magnifier">
@@ -35,6 +35,9 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
   </Card>
   <Card title="Files real defects" icon="error">
     Hook up GitHub, Jira, or Azure DevOps via MCP and the runner files failures directly as issues / tickets / work items, with screenshots and reproduction steps attached.
+  </Card>
+  <Card title="Verifies its own evidence" icon="star">
+    Every result is checked twice: a schema/cross-check pass, then a vision spot-check that reads the actual screenshot and overrides a PASS or FAIL claim that doesn't match what's on screen. A false verdict has to fool both a parser and a vision model.
   </Card>
   <Card title="Stays in sync with your code" icon="approve-check">
     A Git pre-commit hook + Claude session hooks fingerprint every analysed source file and flag drift the moment a UI changes — so the next run tests what the UI actually does, not a stale plan.
