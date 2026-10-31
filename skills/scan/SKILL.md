@@ -1,7 +1,7 @@
 ---
 description: Force a full re-scan of every route and rewrite every task, regardless of fingerprints. Use when the catalog drifted too far or when you change the test-author template or task depth. Destructive — overwrites QA-tests/tasks/ after backing them up.
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node *), Bash(git *), Bash(mkdir *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author)
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/detect-framework.mjs" *), Bash(mkdir -p *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author)
 ---
 
 # /qa-my-app:scan — Full rescan

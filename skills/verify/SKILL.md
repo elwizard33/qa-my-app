@@ -3,7 +3,7 @@ description: Verify the work in flight — test only what changed. Resolves scop
 when_to_use: |
   Use right after making a change to confirm it works, to test a specific page or ticket end-to-end, or to verify a PR before pushing. Trigger phrases include "verify this", "test what I changed", "does my change work", "verify the ticket", "test this page now", "check my PR", "verify PROJ-123", and "test the form I just built".
 argument-hint: "[ticket-id | route | path | --branch [base] | --staged]"
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bash(git *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/change-scope.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/results-index.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-result.mjs" *), Bash(git rev-parse *), Bash(mkdir -p *), Bash(start *report.html*), Bash(xdg-open *report.html*), Bash(open *report.html*), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
 ---
 
 # /qa-my-app:verify — Test what changed (or what a ticket asks for)

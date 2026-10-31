@@ -2,7 +2,7 @@
 description: Run end-to-end tests for some or all pages in this app. Asks the user which routes/tasks to cover (or accepts a filter argument), builds a persistent task-queue index for the run, dispatches batches of test-runner subagents in parallel, verifies each returned result.md against the schema and its screenshots against their claims (vision spot-check), retries verification failures once, then writes a final cross-task report. Use after a sprint, after a dependency bump, or before a release.
 argument-hint: [task-filter]
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
+allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/catalog-diff.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/results-index.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-result.mjs" *), Bash(mkdir -p *), Bash(start *report.html*), Bash(xdg-open *report.html*), Bash(open *report.html*), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
 ---
 
 # /qa-my-app:run-all — Full-platform parallel test run

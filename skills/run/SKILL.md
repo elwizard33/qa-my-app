@@ -2,7 +2,7 @@
 description: Execute a single QA task end-to-end via the qa-test-runner subagent (project-level, installed by /qa-my-app:init). Writes a date-stamped result.md with per-TC pass/fail, embedded screenshots, console errors, and network failures, verifies it mechanically (verify-result.mjs) and against its screenshot evidence (vision spot-check), then appends to QA-tests/results/history.json. Argument is the task id (e.g. T03 or T03-customers-create).
 argument-hint: <task-id>
 disable-model-invocation: true
-allowed-tools: Read, Glob, Write, Edit, Bash(node *), Bash(mkdir *), Bash(start *), Bash(xdg-open *), Bash(open *), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
+allowed-tools: Read, Glob, Write, Edit, Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/render-report.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/results-index.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-result.mjs" *), Bash(mkdir -p *), Bash(start *report.html*), Bash(xdg-open *report.html*), Bash(open *report.html*), Agent(qa-test-runner), Agent(qa-my-app:result-reviewer)
 ---
 
 # /qa-my-app:run — Execute one task

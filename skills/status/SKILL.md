@@ -2,7 +2,7 @@
 description: Print a one-shot health + inventory snapshot of the QA catalog in this project — browser-agent install status, catalog framework/route/task counts, configured issue-tracker integrations, drift vs. source, and the most recent run's pass/fail/blocked totals. Read-only; never modifies the catalog. Use to verify an install or get your bearings before a run.
 when_to_use: |
   Use to confirm the plugin is wired up correctly, to see how many routes and tasks exist, to check whether the catalog has drifted from source, or to recall the last run's results without opening files. Trigger phrases include "qa status", "is qa set up", "catalog status", "show qa health", "how many tests", and "did the catalog drift".
-allowed-tools: Read, Bash(node *), Bash(test *)
+allowed-tools: Read, Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/status.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/catalog-diff.mjs" *), Bash(test *)
 ---
 
 # /qa-my-app:status — Catalog health & inventory

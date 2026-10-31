@@ -6,6 +6,11 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-10-30
+
+### Fixed
+- **Directory review hold: "Pre-approves broad shell access in allowed-tools."** Every skill's `allowed-tools` granted unscoped `Bash(node *)` and, in five skills, unscoped `Bash(git *)` — exactly the pattern the [`allowed-tools` reference](https://code.claude.com/docs/en/skills) calls out as "use with caution," since `node *` admits arbitrary code via `node -e` and `git *` admits arbitrary program execution via `git -c core.fsmonitor=<script>`. Replaced every grant with the script- and subcommand-scoped form the same docs recommend: each skill now pre-approves only the exact `${CLAUDE_PLUGIN_ROOT}/scripts/*.mjs` (or `.sh`) invocations and git subcommands (`git rev-parse`, `git diff`) it actually runs — `git *` dropped entirely from `scan` (unused there). `mkdir *` narrowed to `mkdir -p *`, `claude mcp *` to `claude mcp list *` (the only subcommand any skill runs itself), and the report-opening `open`/`start`/`xdg-open` grants in `run`, `run-all`, and `verify` narrowed to paths containing `report.html`.
+
 ## [1.1.0] — 2026-10-30
 
 Vision verification (Pass 9): test results are now checked against their own

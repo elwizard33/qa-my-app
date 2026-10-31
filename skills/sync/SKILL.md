@@ -1,7 +1,7 @@
 ---
 description: Re-scan only the routes whose source files changed since the last catalog generation, then patch QA-tests/catalog.json with adds/updates/removes. Run after pulling changes, before committing, or whenever the file-change hook prompts you. Idempotent. Honors plugin user-config for parallelism, auth, and task depth.
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node *), Bash(git *), Bash(mkdir *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-my-app:catalog-reconciler)
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/catalog-diff.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/detect-framework.mjs" *), Bash(git diff *), Bash(mkdir -p *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author), Agent(qa-my-app:catalog-reconciler)
 ---
 
 # /qa-my-app:sync — Reconcile catalog with current code

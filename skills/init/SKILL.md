@@ -2,7 +2,7 @@
 description: Bootstrap a fresh QA-tests/ folder in this project. Auto-detects the framework, discovers every route, loads each page in a real browser, inventories every form/button/modal/role guard, and writes deep test tasks. Use on a new project or to re-baseline the catalog. Optional argument is the dev server URL (defaults to the configured value, then to the framework-detected default).
 argument-hint: [dev-server-url]
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node *), Bash(git *), Bash(mkdir *), Bash(claude mcp *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author)
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/detect-framework.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/auth-resolve.mjs" *), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/fingerprint.mjs" *), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/install-precommit.sh" *), Bash(git rev-parse *), Bash(mkdir -p *), Bash(claude mcp list *), Agent(qa-my-app:route-discoverer), Agent(qa-page-analyzer), Agent(qa-my-app:test-author)
 ---
 
 # /qa-my-app:init — Bootstrap QA-tests/
