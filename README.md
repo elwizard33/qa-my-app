@@ -554,6 +554,7 @@ All runtime knobs live in `.claude-plugin/plugin.json` and are editable via `/pl
 | `browser_engine` | `playwright` | Browser-automation engine the browser agents drive: `playwright` (default, all browsers, full fidelity), `chrome-devtools` (Chrome-only, perf + Lighthouse), `stagehand` (Browserbase cloud, AI act/observe/extract — experimental). See [docs/browsers/](docs/browsers/README.md). |
 | `browser_channel` | `chromium` | For `playwright` / `chrome-devtools`: `chromium`, `chrome`, `msedge`, `firefox`, `webkit`. Ignored by `stagehand`. |
 | `browser_headless` | `true` | Set false to watch agents work. Ignored by `stagehand` (cloud is always headless). |
+| `browserbase_api_key` | _empty (sensitive)_ | Only used by `stagehand`. OS keychain only, never substituted into skill/agent content. `/qa-my-app:init` writes a placeholder into the generated browser agents; paste the real key in yourself. See [docs/browsers/stagehand.md](docs/browsers/stagehand.md#configuration). |
 | `settle_ms` | `5000` | Wait after navigation before snapshot (0–60000). |
 | `auth_mode` | `none` | `none` / `shared-credentials` / `storage-state` / `per-role`. See [Authenticating protected routes](#authenticating-protected-routes). |
 | `auth_username` | _empty_ | Single shared username, used when `auth_mode = shared-credentials`. |

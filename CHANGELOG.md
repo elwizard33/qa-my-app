@@ -6,6 +6,17 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-11-04
+
+Three fixes from the directory's post-submission policy scan, none behavioral for the default `playwright` path.
+
+### Added
+- **`.claude-plugin/icon.png`** — the directory listing had no icon; a square PNG (1024×1024, cropped from the existing banner artwork) now ships in the plugin folder, which the portal only picks up from a plugin's first save/submission.
+
+### Changed
+- **Stagehand/Browserbase no longer reads a raw credential from the environment.** `browser_engine: stagehand` previously had `/qa-my-app:init` write `${BROWSERBASE_API_KEY}` straight into the generated browser agents' `mcpServers` URL — a flagged "credential from the user's machine, sent to a server" pattern. Added a `browserbase_api_key` userConfig (`sensitive: true`); init now writes a literal, inert placeholder (`REPLACE_WITH_YOUR_BROWSERBASE_API_KEY`) instead, since Claude Code never substitutes a sensitive value into skill or agent content — the user sets the key via `/plugin` and pastes it into the two generated files themselves, a one-time manual step identical in kind to the existing GitHub/Jira/Azure DevOps setup flow. Updated `skills/init/SKILL.md`, `docs/browsers/stagehand.md`, the docs site's Stagehand page, and `README.md`'s settings table.
+- **`scripts/install-precommit.sh` no longer guesses its own install path at every commit.** The generated `.git/hooks/pre-commit` used to search three hardcoded candidate directories (`~/.claude/plugins/qa-my-app`, `~/.config/claude/plugins/qa-my-app`, a project-local path) for `catalog-diff.mjs`, silently no-op-ing if none matched — a file the directory's scanner can't trace to one known, reviewable location. The installer now resolves its own real plugin root (`dirname` of its own script directory) once, at install time, and bakes that exact absolute path into the generated hook. The hook now always runs one specific, shipped file.
+
 ## [1.1.1] — 2026-10-30
 
 ### Fixed

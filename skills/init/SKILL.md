@@ -66,13 +66,14 @@ If either file already exists (e.g. the user has customised it), leave it unchan
         args: ["-y", "chrome-devtools-mcp@1.6.0", "--isolated", "--headless"]
   ```
   (Drop `--headless` if `${user_config.browser_headless}` is `false`. Chrome-only.)
-- `stagehand` (Browserbase cloud, requires `BROWSERBASE_API_KEY` in the environment):
+- `stagehand` (Browserbase cloud): write the block below with the literal placeholder text — **never** read or embed an actual API key yourself, from the environment or anywhere else:
   ```yaml
   mcpServers:
     - browserbase:
         type: http
-        url: "https://mcp.browserbase.com/mcp?browserbaseApiKey=${BROWSERBASE_API_KEY}"
+        url: "https://mcp.browserbase.com/mcp?browserbaseApiKey=REPLACE_WITH_YOUR_BROWSERBASE_API_KEY"
   ```
+  Claude Code never substitutes a `sensitive: true` config value into skill or agent content, so there is no way for this step to write the real key into the file. After writing both files, tell the user once: "Set your key via `/plugin` → qa-my-app → Configure → **Browserbase API key** if you haven't, then open `.claude/agents/qa-page-analyzer.md` and `.claude/agents/qa-test-runner.md` and replace `REPLACE_WITH_YOUR_BROWSERBASE_API_KEY` with that value — this plugin never reads or transmits it for you." Do this yourself only if the user explicitly pastes the key back to you in chat and asks you to; otherwise leave the placeholder in place.
 
 See [docs/browsers/](../../docs/browsers/README.md) for per-engine setup and caveats (Stagehand has limited screenshot/console/network capture).
 

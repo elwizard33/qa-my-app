@@ -3,7 +3,7 @@
   "name": "qa-my-app",
   "displayName": "QA My App",
   "description": "End-to-end QA testing as a Claude Code plugin. Auto-discovers your stack and routes, drives every page in a real browser via the bundled Playwright MCP, runs the whole platform in parallel test-runner subagents, verifies each result against a schema and — via vision — against its own screenshots, and files defects to GitHub/Jira/Azure DevOps if connected. No test code to write — the plugin understands your app from source.",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": {
     "name": "elwizard33",
     "email": "elwizard33@users.noreply.github.com",
@@ -61,6 +61,13 @@
       "title": "Browser channel",
       "description": "For the playwright / chrome-devtools engines, which browser to launch: chromium (default), chrome, msedge, firefox, webkit. Ignored by the stagehand (cloud) engine.",
       "default": "chromium"
+    },
+    "browserbase_api_key": {
+      "type": "string",
+      "title": "Browserbase API key",
+      "description": "Only used when browser_engine is stagehand. Claude Code never substitutes a sensitive value into skill or agent content, so /qa-my-app:init writes a placeholder into the project-level browser agents' mcpServers block; the plugin's PostToolUse hook (scripts/resolve-browser-secrets.mjs) resolves it from this stored value afterward, from its own hook process environment. The key is never seen by Claude.",
+      "sensitive": true,
+      "default": ""
     },
     "browser_headless": {
       "type": "boolean",

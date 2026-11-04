@@ -7,43 +7,36 @@ set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 HOOK="$REPO_ROOT/.git/hooks/pre-commit"
+# This script lives at <plugin-root>/scripts/install-precommit.sh, so its own
+# parent's parent is the exact plugin installation that is running right now.
+# Bake that real, known path into the generated hook instead of guessing
+# candidate locations at commit time -- the hook then always runs one
+# specific, reviewable file: THIS plugin's own scripts/catalog-diff.mjs.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_ROOT="$(dirname "$SCRIPT_DIR")"
 
 mkdir -p "$REPO_ROOT/.git/hooks"
 
-cat > "$HOOK" <<'EOF'
+cat > "$HOOK" <<EOF
 #!/usr/bin/env bash
-# Auto-installed by qa-my-app Claude Code plugin.
+# Auto-installed by the qa-my-app Claude Code plugin at: $PLUGIN_ROOT
 # Verifies QA-tests/catalog.json is in sync with staged source files.
 # Bypass with: git commit --no-verify  (not recommended)
+# If the plugin moves or updates to a new install path, re-run
+# /qa-my-app:init (Phase 6) to refresh this hook.
 
 if [ ! -f QA-tests/catalog.json ]; then
   exit 0
 fi
 
-# Resolve plugin script path. Users can override via QA_CATALOG_PLUGIN_DIR.
-PLUGIN_DIR="${QA_CATALOG_PLUGIN_DIR:-}"
-if [ -z "$PLUGIN_DIR" ]; then
-  # Try common locations
-  for candidate in \
-    "$HOME/.claude/plugins/qa-my-app" \
-    "$HOME/.config/claude/plugins/qa-my-app" \
-    "$(git rev-parse --show-toplevel)/.claude/plugins/qa-my-app"; do
-    if [ -f "$candidate/scripts/catalog-diff.mjs" ]; then
-      PLUGIN_DIR="$candidate"
-      break
-    fi
-  done
-fi
-
-if [ -z "$PLUGIN_DIR" ] || [ ! -f "$PLUGIN_DIR/scripts/catalog-diff.mjs" ]; then
-  echo "[qa-my-app] pre-commit hook installed but plugin scripts not found; skipping."
-  echo "  Set QA_CATALOG_PLUGIN_DIR to the plugin root to enable."
+if [ ! -f "$PLUGIN_ROOT/scripts/catalog-diff.mjs" ]; then
+  echo "[qa-my-app] pre-commit hook installed but the plugin is no longer at $PLUGIN_ROOT; skipping."
+  echo "  Re-run /qa-my-app:init to refresh this hook."
   exit 0
 fi
 
-node "$PLUGIN_DIR/scripts/catalog-diff.mjs" --precommit
+node "$PLUGIN_ROOT/scripts/catalog-diff.mjs" --precommit
 EOF
 
 chmod +x "$HOOK"
-echo "[qa-my-app] installed pre-commit hook at $HOOK"
+echo "[qa-my-app] installed pre-commit hook at $HOOK (plugin: $PLUGIN_ROOT)"

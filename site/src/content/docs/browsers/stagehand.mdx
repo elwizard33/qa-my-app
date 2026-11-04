@@ -26,27 +26,22 @@ The Browserbase MCP surface centers on `act` / `observe` / `extract` / `navigate
 
 ## Configuration
 
-This plugin uses the **hosted (HTTP)** Browserbase MCP. `/qa-my-app:init` writes this `mcpServers` block into each project-level browser agent:
+This plugin uses the **hosted (HTTP)** Browserbase MCP. `/qa-my-app:init` writes this `mcpServers` block into each project-level browser agent with a literal placeholder — the plugin never reads or transmits your API key for you:
 
 ```yaml
 mcpServers:
   - browserbase:
       type: http
-      url: "https://mcp.browserbase.com/mcp?browserbaseApiKey=${BROWSERBASE_API_KEY}"
+      url: "https://mcp.browserbase.com/mcp?browserbaseApiKey=REPLACE_WITH_YOUR_BROWSERBASE_API_KEY"
 ```
 
-Export your key before launching Claude Code so the `${BROWSERBASE_API_KEY}` placeholder resolves:
+Claude Code only substitutes a `sensitive: true` config value into skill or agent content as a placeholder, never the real value, so there's a one-time manual step after init: set your key via `/plugin` → qa-my-app → Configure → **Browserbase API key** (stored in your OS keychain, never in `settings.json`), then open both written files and replace `REPLACE_WITH_YOUR_BROWSERBASE_API_KEY` with that value yourself.
 
-```bash
-export BROWSERBASE_API_KEY="bb_live_..."
-export BROWSERBASE_PROJECT_ID="..."   # used by some optional query params
-```
-
-You can also register it from the CLI instead of the inline block:
+You can also register the server from the CLI instead of editing the inline block, pasting your own key directly into your own shell:
 
 ```bash
 claude mcp add --transport http browserbase \
-  "https://mcp.browserbase.com/mcp?browserbaseApiKey=$BROWSERBASE_API_KEY"
+  "https://mcp.browserbase.com/mcp?browserbaseApiKey=<your-key>"
 ```
 
 ### Optional query parameters
