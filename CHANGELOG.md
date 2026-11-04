@@ -6,6 +6,14 @@ All notable changes to this plugin are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.3] — 2026-11-04
+
+### Added
+- **`scripts/resolve-browser-secrets.mjs`** — a `PostToolUse` hook that finishes the fix started in 1.1.2. Instead of leaving the Browserbase placeholder for the user to paste over by hand, the hook reads `CLAUDE_PLUGIN_OPTION_BROWSERBASE_API_KEY` from its own hook-process environment (exported to hook processes only, never to Claude or to skill/agent content) and patches it into `.claude/agents/qa-page-analyzer.md` / `qa-test-runner.md` right after `/qa-my-app:init` writes them. No-ops when the key isn't set or the written file doesn't contain the placeholder. Registered in `hooks/hooks.json` alongside the existing drift-check hook, same `Write|Edit` matcher, async. Updated `skills/init/SKILL.md`, both Stagehand docs pages, and the README settings table to describe automatic resolution instead of a manual paste step.
+
+### Fixed
+- **`docs/ARCHITECTURE.md` and the docs site's mirror** still listed the `PostToolUse` matcher as `Write|Edit|MultiEdit` — `MultiEdit` was dropped from the actual hook in 1.1.0 (`hooks/hooks.json`); the matcher documented here didn't match reality since. Also added the missing `resolve-browser-secrets.mjs` row and corrected a stale claim that the plugin bundles a session-level Playwright MCP (it doesn't — `AGENTS.md` and the main architecture doc are explicit that there is deliberately no `.mcp.json`).
+
 ## [1.1.2] — 2026-11-04
 
 Three fixes from the directory's post-submission policy scan, none behavioral for the default `playwright` path.

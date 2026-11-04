@@ -42,10 +42,11 @@ flowchart TD
 | Script | `status.mjs` | Read-only inventory aggregator for `/qa-my-app:status`: browser-agent install state, route/task counts, integrations, last-run totals. Supports `--json`. |
 | Script | `auth-resolve.mjs` | Read-only per-role credential resolver. Reads the gitignored `QA-tests/.qa-catalog/auth.local.json`, interpolates `${ENV_VAR}` passwords, returns the `credentialsByRole` map (or a redacted status via `--status`). Never writes secrets. |
 | Script | `render-report.mjs` | Renders the self-contained `report.html` dashboard from the live `task-queue.json`. |
-| Script | `install-precommit.sh` | Drops the Git pre-commit guard during `init`. |
+| Script | `install-precommit.sh` | Drops the Git pre-commit guard during `init`. Resolves its own real plugin-install path once, at install time, and bakes that one path into the generated hook. |
+| Script | `resolve-browser-secrets.mjs` | `PostToolUse` hook. Patches the Stagehand/Browserbase placeholder in the project-level browser agents with `CLAUDE_PLUGIN_OPTION_BROWSERBASE_API_KEY`, available only to hook processes — the real key never reaches Claude's context. |
 | Hook | `SessionStart (matcher: startup)` | Injects drift context into Claude's session via `hookSpecificOutput.additionalContext`. |
-| Hook | `PostToolUse Write\|Edit\|MultiEdit` | Async re-check after every file edit. Never blocks the tool loop. |
-| MCP | `playwright` | Bundled Playwright MCP (stdio) for the main session. The project-scope browser agents declare their **own** inline `mcpServers` so each parallel spawn gets its own dedicated process. |
+| Hook | `PostToolUse Write\|Edit` | Two async handlers after every file edit: drift re-check and Browserbase secret resolution. Neither blocks the tool loop. |
+| MCP | `playwright` | Declared **inline** on the project-scope browser agents so each parallel spawn gets its own dedicated process. The plugin ships no `.mcp.json` — a session-level server would load browser tool descriptions into every main conversation for no benefit. |
 
 ## Why two project-scope agents
 

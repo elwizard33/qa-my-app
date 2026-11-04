@@ -50,9 +50,10 @@ flowchart TD
 | Script | `status.mjs` | [scripts/status.mjs](../scripts/status.mjs) | Read-only inventory aggregator for `/qa-my-app:status`: browser-agent install state, route/task counts, integrations, last-run totals. Supports `--json`. |
 | Script | `auth-resolve.mjs` | [scripts/auth-resolve.mjs](../scripts/auth-resolve.mjs) | Read-only per-role credential resolver. Reads the gitignored `QA-tests/.qa-catalog/auth.local.json`, interpolates `${ENV_VAR}` passwords, and returns the `credentialsByRole` map (or a redacted status via `--status`). Never writes secrets. |
 | Script | `render-report.mjs` | [scripts/render-report.mjs](../scripts/render-report.mjs) | Renders the self-contained `report.html` dashboard from the live `task-queue.json`. |
-| Script | `install-precommit.sh` | [scripts/install-precommit.sh](../scripts/install-precommit.sh) | Drops the Git pre-commit guard during `init`. |
+| Script | `install-precommit.sh` | [scripts/install-precommit.sh](../scripts/install-precommit.sh) | Drops the Git pre-commit guard during `init`. Resolves its own real plugin-install path once, at install time, and bakes that one path into the generated hook. |
+| Script | `resolve-browser-secrets.mjs` | [scripts/resolve-browser-secrets.mjs](../scripts/resolve-browser-secrets.mjs) | `PostToolUse` hook. Patches the Stagehand/Browserbase placeholder in the project-level browser agents with `CLAUDE_PLUGIN_OPTION_BROWSERBASE_API_KEY`, available only to hook processes — the real key never reaches Claude's context. No-ops when the key isn't set or the engine isn't `stagehand`. |
 | Hook | `SessionStart (matcher: startup)` | [hooks/hooks.json](../hooks/hooks.json) | Injects drift context into Claude's session via `hookSpecificOutput.additionalContext`. |
-| Hook | `PostToolUse Write\|Edit\|MultiEdit` | [hooks/hooks.json](../hooks/hooks.json) | Async re-check after every file edit. Never blocks the tool loop. |
+| Hook | `PostToolUse Write\|Edit` | [hooks/hooks.json](../hooks/hooks.json) | Two async handlers after every file edit: drift re-check (`catalog-diff.mjs`) and Browserbase secret resolution (`resolve-browser-secrets.mjs`). Neither blocks the tool loop. |
 | MCP | `playwright` | agent frontmatter | Declared **inline** on the project-scope browser agents (stdio, `npx @playwright/mcp@0.0.78`) so each parallel spawn gets its own dedicated process. The plugin ships no `.mcp.json`: a session-level server would load the browser tool descriptions into every main conversation for no benefit, since all browser work happens inside subagents. |
 
 ## Catalog model
@@ -72,7 +73,7 @@ Because tasks are uniform in shape, the orchestrator can fan them out across N r
 | Trigger | Action |
 |---|---|
 | `SessionStart` (`matcher: startup`) | Emits `hookSpecificOutput.additionalContext` JSON so Claude proactively knows the catalog drifted and can suggest `/qa-my-app:sync` at session boot. Status: "qa-my-app: checking drift". |
-| `PostToolUse` after `Write\|Edit\|MultiEdit` (async) | Silent re-check after every file edit. Never blocks the tool loop. Status: "qa-my-app: drift check". |
+| `PostToolUse` after `Write\|Edit` (async) | Silent re-check after every file edit. Never blocks the tool loop. Status: "qa-my-app: drift check". |
 | Git `pre-commit` | Re-fingerprints staged source files. **Blocks the commit** if `QA-tests/catalog.json` is stale and prints the routes that drifted. Bypass with `git commit --no-verify` (not recommended). |
 
 ## Why two project-scope agents

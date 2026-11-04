@@ -25,6 +25,14 @@
             "timeout": 10,
             "async": true,
             "statusMessage": "qa-my-app: drift check"
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/resolve-browser-secrets.mjs"],
+            "timeout": 5,
+            "async": true,
+            "statusMessage": "qa-my-app: resolving browser secrets"
           }
         ]
       }

@@ -35,7 +35,7 @@ mcpServers:
       url: "https://mcp.browserbase.com/mcp?browserbaseApiKey=REPLACE_WITH_YOUR_BROWSERBASE_API_KEY"
 ```
 
-Claude Code only substitutes a `sensitive: true` config value into skill or agent content as a placeholder, never the real value, so there's a one-time manual step after init: set your key via `/plugin` → qa-my-app → Configure → **Browserbase API key** (stored in your OS keychain, never in `settings.json`), then open both written files and replace `REPLACE_WITH_YOUR_BROWSERBASE_API_KEY` with that value yourself.
+Claude Code only substitutes a `sensitive: true` config value into skill or agent content as a placeholder, never the real value, so init can't write the real key into these files directly. Instead, set your key once via `/plugin` → qa-my-app → Configure → **Browserbase API key** (stored in your OS keychain, never in `settings.json`). The plugin's `PostToolUse` hook (`scripts/resolve-browser-secrets.mjs`) runs after every file write; it reads the stored key from its own hook-process environment — `CLAUDE_PLUGIN_OPTION_BROWSERBASE_API_KEY`, never visible to Claude or to this conversation — and replaces the placeholder in both files on disk. Set the key before running `/qa-my-app:init` and it resolves automatically during init; set it afterward and the next file write (any edit) resolves it.
 
 You can also register the server from the CLI instead of editing the inline block, pasting your own key directly into your own shell:
 

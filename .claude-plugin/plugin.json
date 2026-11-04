@@ -3,7 +3,7 @@
   "name": "qa-my-app",
   "displayName": "QA My App",
   "description": "End-to-end QA testing as a Claude Code plugin. Auto-discovers your stack and routes, drives every page in a real browser via the bundled Playwright MCP, runs the whole platform in parallel test-runner subagents, verifies each result against a schema and — via vision — against its own screenshots, and files defects to GitHub/Jira/Azure DevOps if connected. No test code to write — the plugin understands your app from source.",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "author": {
     "name": "elwizard33",
     "email": "elwizard33@users.noreply.github.com",
